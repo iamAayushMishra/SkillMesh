@@ -1,36 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Semantic Search | Semantic Employee System{% endblock %}
+{% block title %}Search | SkillMesh{% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <h2>Semantic Search</h2>
-    <p style="margin-bottom: 2rem; color: var(--text-secondary);">Query the knowledge graph to find employees based on relationships (Skills, Departments, Certifications).</p>
-
-    <div class="card" style="margin-bottom: 2rem;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-            <!-- Search by Skill -->
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-row">
             <div>
+                <h1>Semantic Search</h1>
+                <p class="page-subtitle">Query the knowledge graph to find employees by skills, departments, or certifications.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.75rem;">
+        <div class="search-filters">
+            <!-- Search by Skill -->
+            <div class="search-filter-group">
                 <label class="form-label">Search by Skill</label>
-                <div style="display: flex; gap: 0.5rem;">
+                <div class="search-input-row">
                     <select id="skill-select" class="form-control">
                         <option value="">Loading skills...</option>
                     </select>
-                    <button class="btn btn-primary" onclick="performSearch('skill')">Search</button>
+                    <button class="btn btn-primary" onclick="performSearch('skill')">
+                        <span class="material-symbols-rounded" style="font-size:1rem;">search</span>
+                        Search
+                    </button>
                 </div>
-                <div id="related-skills-container" style="margin-top: 0.5rem; display: none;">
-                    <small style="color: var(--text-secondary);">Related Skills: <span id="related-skills-list"></span></small>
+                <div id="related-skills-container" class="related-skills-box" style="display: none;">
+                    <span style="color: var(--text-tertiary); font-weight: 500;">Related Skills:</span>
+                    <span id="related-skills-list"></span>
                 </div>
             </div>
 
             <!-- Search by Department -->
-            <div>
+            <div class="search-filter-group">
                 <label class="form-label">Search by Department</label>
-                <div style="display: flex; gap: 0.5rem;">
+                <div class="search-input-row">
                     <select id="dept-select" class="form-control">
                         <option value="">Loading departments...</option>
                     </select>
-                    <button class="btn btn-primary" onclick="performSearch('department')">Search</button>
+                    <button class="btn btn-primary" onclick="performSearch('department')">
+                        <span class="material-symbols-rounded" style="font-size:1rem;">search</span>
+                        Search
+                    </button>
                 </div>
             </div>
         </div>
@@ -40,7 +54,9 @@
     <div id="search-loading" class="spinner" style="display: none;"></div>
     
     <div id="search-results-container" style="display: none;">
-        <h3 style="margin-bottom: 1rem;">Search Results (<span id="result-count">0</span>)</h3>
+        <div class="card-header" style="margin-bottom: 1rem;">
+            <h3>Search Results <span style="font-weight: 400; color: var(--text-tertiary); font-size: 0.9rem;">(<span id="result-count">0</span> found)</span></h3>
+        </div>
         <div class="table-container">
             <table id="results-table">
                 <thead>
@@ -111,15 +127,21 @@
             tbody.innerHTML = '';
 
             if (data.count === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No employees found matching this criteria.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No employees found matching this criteria.</div></div></td></tr>`;
             } else {
-                data.results.forEach(emp => {
+                data.results.forEach((emp, idx) => {
+                    const initials = emp.name.split(' ').map(n => n[0]).join('').substring(0, 2);
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${emp.empId}</strong></td>
-                            <td>${emp.name}</td>
+                            <td><strong style="color: var(--accent-purple);">${emp.empId}</strong></td>
+                            <td>
+                                <div class="emp-name-cell">
+                                    <div class="emp-avatar" data-color="${idx % 6}">${initials}</div>
+                                    <span>${emp.name}</span>
+                                </div>
+                            </td>
                             <td><span class="badge badge-dept">${emp.department}</span></td>
-                            <td><a href="mailto:${emp.email}">${emp.email}</a></td>
+                            <td><a href="mailto:${emp.email}" style="font-size: 0.88rem;">${emp.email}</a></td>
                         </tr>
                     `;
                 });

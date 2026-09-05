@@ -1,12 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Knowledge Graph | Semantic Employee System{% endblock %}
+{% block title %}Knowledge Graph | SkillMesh{% endblock %}
 
 {% block content %}
 <div class="fade-in" style="display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 600px;">
-    <div>
-        <h2>Interactive Knowledge Graph</h2>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Visualize relationships between Employees, Skills, Departments, and Projects.</p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-row">
+            <div>
+                <h1>Interactive Knowledge Graph</h1>
+                <p class="page-subtitle">Visualize relationships between Employees, Skills, Departments, and Projects.</p>
+            </div>
+            <button class="btn btn-secondary" id="btn-reset">
+                <span class="material-symbols-rounded" style="font-size:1rem;">center_focus_strong</span>
+                Reset View
+            </button>
+        </div>
     </div>
 
     <div id="graph-loading" class="spinner"></div>
@@ -14,23 +23,19 @@
 
     <div id="cy-container" style="flex: 1; display: none;">
         <div class="graph-controls">
-            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Legend</h4>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #6366f1;"></div> Employee
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div> Skill
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div> Department
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div> Project
-                </div>
+            <h4 style="margin-bottom: 0.65rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary);">Legend</h4>
+            <div class="graph-legend-item">
+                <div class="graph-legend-dot" style="background-color: #818cf8;"></div> Employee
             </div>
-            <hr style="margin: 10px 0; border: none; border-top: 1px solid var(--border-color);">
-            <button class="btn btn-sm" id="btn-reset" style="width: 100%; border: 1px solid var(--border-color); background: white;">Reset View</button>
+            <div class="graph-legend-item">
+                <div class="graph-legend-dot" style="background-color: #34d399;"></div> Skill
+            </div>
+            <div class="graph-legend-item">
+                <div class="graph-legend-dot" style="background-color: #fbbf24;"></div> Department
+            </div>
+            <div class="graph-legend-item">
+                <div class="graph-legend-dot" style="background-color: #f87171;"></div> Project
+            </div>
         </div>
     </div>
 </div>
@@ -55,7 +60,7 @@
             console.error(error);
             document.getElementById('graph-loading').style.display = 'none';
             const errorDiv = document.getElementById('graph-error');
-            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading graph: ${error.message}</span>`;
+            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading graph: ${error.message}</span>`;
             errorDiv.style.display = 'flex';
         }
     });
@@ -86,13 +91,13 @@
             });
         });
 
-        // Color palette based on modern theme
+        // Color palette — softer modern tones
         const colors = {
-            'Employee': '#6366f1',
-            'Skill': '#10b981',
-            'Department': '#f59e0b',
-            'Project': '#ef4444',
-            'Certification': '#d946ef'
+            'Employee': '#818cf8',
+            'Skill': '#34d399',
+            'Department': '#fbbf24',
+            'Project': '#f87171',
+            'Certification': '#c084fc'
         };
 
         const cy = cytoscape({
@@ -105,42 +110,49 @@
                         'label': 'data(label)',
                         'text-valign': 'bottom',
                         'text-halign': 'center',
-                        'text-margin-y': 5,
+                        'text-margin-y': 6,
                         'background-color': function(ele) {
                             return colors[ele.data('type')] || '#94a3b8';
                         },
-                        'font-size': '12px',
+                        'font-size': '11px',
                         'font-family': 'Inter, sans-serif',
-                        'color': '#1e293b',
+                        'font-weight': '500',
+                        'color': '#374151',
                         'text-outline-color': '#ffffff',
-                        'text-outline-width': 2,
-                        'width': function(ele) { return ele.data('type') === 'Employee' ? 40 : 30; },
-                        'height': function(ele) { return ele.data('type') === 'Employee' ? 40 : 30; }
+                        'text-outline-width': 2.5,
+                        'width': function(ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
+                        'height': function(ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
+                        'border-width': 2,
+                        'border-color': '#ffffff',
+                        'shadow-blur': 8,
+                        'shadow-color': 'rgba(0,0,0,0.08)',
+                        'shadow-offset-x': 0,
+                        'shadow-offset-y': 2
                     }
                 },
                 {
                     selector: 'edge',
                     style: {
                         'label': 'data(label)',
-                        'font-size': '10px',
-                        'color': '#64748b',
+                        'font-size': '9px',
+                        'color': '#9ca3af',
                         'text-rotation': 'autorotate',
-                        'text-margin-y': -10,
-                        'width': 2,
-                        'line-color': '#cbd5e1',
-                        'target-arrow-color': '#cbd5e1',
+                        'text-margin-y': -8,
+                        'width': 1.5,
+                        'line-color': '#d1d5db',
+                        'target-arrow-color': '#d1d5db',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
-                        'opacity': 0.7
+                        'opacity': 0.65
                     }
                 },
                 {
                     selector: ':selected',
                     style: {
                         'border-width': 4,
-                        'border-color': '#334155',
-                        'line-color': '#334155',
-                        'target-arrow-color': '#334155',
+                        'border-color': '#6366f1',
+                        'line-color': '#6366f1',
+                        'target-arrow-color': '#6366f1',
                         'opacity': 1
                     }
                 }
@@ -162,7 +174,6 @@
 
         // Add interaction: hover effects
         cy.on('mouseover', 'node', function(e){
-            const node = e.target;
             document.body.style.cursor = 'pointer';
         });
         cy.on('mouseout', 'node', function(e){

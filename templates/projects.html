@@ -1,15 +1,22 @@
 {% extends "base.html" %}
 
-{% block title %}Projects | Semantic Employee System{% endblock %}
+{% block title %}Projects | SkillMesh{% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <h2>Projects & Candidate Matching</h2>
-    <p style="margin-bottom: 2rem; color: var(--text-secondary);">View company projects and semantically match employees based on required skills.</p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-row">
+            <div>
+                <h1>Projects & Candidates</h1>
+                <p class="page-subtitle">View company projects and semantically match employees based on required skills.</p>
+            </div>
+        </div>
+    </div>
 
     <div id="projects-loading" class="spinner"></div>
 
-    <div id="projects-container" style="display: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+    <div class="projects-grid stagger" id="projects-container" style="display: none;">
         <!-- Populated by JS -->
     </div>
 </div>
@@ -21,7 +28,7 @@
             <h3 id="modal-project-name">Project Candidates</h3>
             <button class="close-btn" id="close-modal">&times;</button>
         </div>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Employees matched based on the project's required skills.</p>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">Employees matched based on the project's required skills.</p>
         
         <div id="modal-loading" class="spinner" style="display: none;"></div>
         
@@ -62,15 +69,16 @@
                 const requiredSkillsHTML = proj.requiredSkills.map(s => `<span class="badge badge-skill">${s}</span>`).join('');
                 
                 const card = document.createElement('div');
-                card.className = 'card fade-in';
+                card.className = 'project-card slide-up';
                 card.innerHTML = `
-                    <h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">${proj.name}</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem;">${proj.description}</p>
-                    <div style="margin-bottom: 1.5rem;">
-                        <span style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Required Skills:</span>
-                        ${requiredSkillsHTML || '<span style="color:var(--text-secondary)">None specified</span>'}
+                    <div class="project-card-name">${proj.name}</div>
+                    <div class="project-card-desc">${proj.description}</div>
+                    <div class="project-card-skills">
+                        <div class="project-card-skills-label">Required Skills</div>
+                        ${requiredSkillsHTML || '<span style="color:var(--text-tertiary); font-size: 0.85rem;">None specified</span>'}
                     </div>
-                    <button class="btn btn-primary match-btn" style="width: 100%;" data-project="${proj.name}">
+                    <button class="btn btn-primary match-btn" data-project="${proj.name}">
+                        <span class="material-symbols-rounded" style="font-size:1rem;">person_search</span>
                         Find Candidates
                     </button>
                 `;
@@ -90,7 +98,7 @@
             document.getElementById('projects-loading').style.display = 'none';
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-banner';
-            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading projects: ${error.message}</span>`;
+            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading projects: ${error.message}</span>`;
             document.querySelector('.main-content').appendChild(errorDiv);
         }
 
@@ -118,17 +126,22 @@
                 tbody.innerHTML = '';
 
                 if (!data.candidates || data.candidates.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No matching candidates found.</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No matching candidates found.</div></div></td></tr>`;
                 } else {
-                    data.candidates.forEach(cand => {
+                    data.candidates.forEach((cand, idx) => {
                         const skillsArray = cand.skills ? cand.skills.split(',') : [];
                         const skillsHTML = skillsArray.map(s => `<span class="badge badge-skill">${s.trim()}</span>`).join('');
                         
                         tbody.innerHTML += `
                             <tr>
-                                <td><strong>${cand.empId}</strong></td>
-                                <td>${cand.name}</td>
-                                <td><span style="font-weight: 700; color: var(--primary-color);">${cand.matchingSkills}</span></td>
+                                <td><strong style="color: var(--accent-purple);">${cand.empId}</strong></td>
+                                <td>
+                                    <div class="emp-name-cell">
+                                        <div class="emp-avatar" data-color="${idx % 6}">${cand.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</div>
+                                        <span>${cand.name}</span>
+                                    </div>
+                                </td>
+                                <td><span style="font-weight: 700; color: var(--accent-purple); font-size: 1.05rem;">${cand.matchingSkills}</span></td>
                                 <td>${skillsHTML}</td>
                             </tr>
                         `;
@@ -140,7 +153,7 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-body').innerHTML = `<div class="error-banner">Error: ${error.message}</div>`;
+                document.getElementById('modal-body').innerHTML = `<div class="error-banner"><span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span> ${error.message}</div>`;
                 document.getElementById('modal-body').style.display = 'block';
             }
         }

@@ -1,17 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | Semantic Employee System{% endblock %}
+{% block title %}Dashboard | SkillMesh{% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <div style="margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Knowledge Graph Dashboard</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem;">Overview of the company's semantic data and relationships.</p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-row">
+            <div>
+                <h1>Knowledge Dashboard</h1>
+                <p class="page-subtitle">Semantic Employee & Skill Management System &middot; Overview</p>
+            </div>
+            <a href="/graph" class="btn btn-new">
+                <span class="material-symbols-rounded" style="font-size:1rem;">add</span>
+                Explore Graph
+            </a>
+        </div>
     </div>
 
+    <!-- Loading -->
     <div id="dashboard-loading" class="spinner"></div>
 
-    <div class="dashboard-grid" id="dashboard-stats" style="display: none;">
+    <!-- Stats Grid -->
+    <div class="dashboard-grid stagger" id="dashboard-stats" style="display: none;">
         <div class="card stat-card">
             <div class="stat-icon">👥</div>
             <div class="stat-value" id="stat-employees">0</div>
@@ -39,13 +50,64 @@
         </div>
     </div>
 
-    <div class="card fade-in" style="margin-top: 2rem; animation-delay: 0.2s;">
-        <h2>Quick Actions</h2>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Explore the semantic relationships within your organization.</p>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="/employees" class="btn btn-primary">View All Employees</a>
-            <a href="/search" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);">Semantic Search</a>
-            <a href="/graph" class="btn btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">Explore Graph</a>
+    <!-- Quick Action Tiles -->
+    <div class="action-tiles stagger" id="action-tiles" style="display: none;">
+        <a href="/employees" class="action-tile tile-employees">
+            <span class="tile-badge">Directory</span>
+            <span class="tile-title">View All<br>Employees</span>
+            <span class="tile-desc">Browse the full employee directory from the knowledge graph.</span>
+        </a>
+        <a href="/search" class="action-tile tile-search">
+            <span class="tile-badge">Semantic</span>
+            <span class="tile-title">Smart<br>Search</span>
+            <span class="tile-desc">Find employees by skills, departments, or certifications.</span>
+        </a>
+        <a href="/graph" class="action-tile tile-graph">
+            <span class="tile-badge">Interactive</span>
+            <span class="tile-title">Knowledge<br>Graph</span>
+            <span class="tile-desc">Visualize all relationships in an interactive network graph.</span>
+        </a>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="dashboard-bottom" id="dashboard-bottom" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h3>Quick Info</h3>
+                <a href="/employees" class="see-all">See All</a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--accent-purple); font-size:1.35rem;">database</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">RDF Triple Store</div>
+                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Powered by Apache Jena Fuseki</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--pastel-green-text); font-size:1.35rem;">account_tree</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">OWL Ontology</div>
+                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Employee, Skill, Project classes</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--pastel-orange-text); font-size:1.35rem;">query_stats</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">SPARQL Queries</div>
+                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Semantic search & inference</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Entity Overview</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div id="overview-bars"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -61,22 +123,68 @@
             
             if (data.error) throw new Error(data.error);
 
-            document.getElementById('stat-employees').innerText = data.employees;
-            document.getElementById('stat-skills').innerText = data.skills;
-            document.getElementById('stat-departments').innerText = data.departments;
-            document.getElementById('stat-projects').innerText = data.projects;
-            document.getElementById('stat-certifications').innerText = data.certifications;
+            // Animate counters
+            animateValue('stat-employees', data.employees);
+            animateValue('stat-skills', data.skills);
+            animateValue('stat-departments', data.departments);
+            animateValue('stat-projects', data.projects);
+            animateValue('stat-certifications', data.certifications);
 
             document.getElementById('dashboard-loading').style.display = 'none';
             document.getElementById('dashboard-stats').style.display = 'grid';
+            document.getElementById('action-tiles').style.display = 'grid';
+            document.getElementById('dashboard-bottom').style.display = 'grid';
+
+            // Build overview bars
+            buildOverviewBars(data);
+
         } catch (error) {
             console.error(error);
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-banner';
-            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading dashboard: ${error.message}</span>`;
+            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading dashboard: ${error.message}</span>`;
             document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('dashboard-loading'));
             document.getElementById('dashboard-loading').style.display = 'none';
         }
     });
+
+    function animateValue(elementId, end) {
+        const el = document.getElementById(elementId);
+        const duration = 800;
+        const start = 0;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            const current = Math.round(start + (end - start) * eased);
+            el.innerText = current;
+            if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+    }
+
+    function buildOverviewBars(data) {
+        const container = document.getElementById('overview-bars');
+        const items = [
+            { label: 'Employees', value: data.employees, color: 'var(--accent-purple)', bg: 'var(--accent-purple-light)' },
+            { label: 'Skills', value: data.skills, color: 'var(--pastel-green-text)', bg: 'var(--pastel-green)' },
+            { label: 'Departments', value: data.departments, color: 'var(--pastel-orange-text)', bg: 'var(--pastel-orange)' },
+            { label: 'Projects', value: data.projects, color: 'var(--pastel-coral-text)', bg: 'var(--pastel-coral)' },
+            { label: 'Certifications', value: data.certifications, color: 'var(--pastel-violet-text)', bg: 'var(--pastel-violet)' },
+        ];
+        const max = Math.max(...items.map(i => i.value), 1);
+
+        container.innerHTML = items.map(item => `
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem;">
+                <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); min-width: 90px;">${item.label}</span>
+                <div style="flex: 1; height: 8px; background: ${item.bg}; border-radius: 99px; overflow: hidden;">
+                    <div style="height: 100%; width: ${(item.value / max) * 100}%; background: ${item.color}; border-radius: 99px; transition: width 1s ease-out;"></div>
+                </div>
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); min-width: 28px; text-align: right;">${item.value}</span>
+            </div>
+        `).join('');
+    }
 </script>
 {% endblock %}
