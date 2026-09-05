@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Employees | Semantic Employee System{% endblock %}
+{% block title %}Employees | SkillMesh{% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <h2>Employee Directory</h2>
-    <p style="margin-bottom: 2rem; color: var(--text-secondary);">Complete list of employees retrieved via SPARQL from the knowledge graph.</p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-row">
+            <div>
+                <h1>Employee Directory</h1>
+                <p class="page-subtitle">Complete list of employees retrieved via SPARQL from the knowledge graph.</p>
+            </div>
+        </div>
+    </div>
 
     <div id="employees-loading" class="spinner"></div>
 
@@ -36,35 +43,37 @@
         </div>
         <div id="modal-loading" class="spinner" style="display: none;"></div>
         <div id="modal-body">
-            <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
-                <div>
-                    <p class="form-label">Employee ID</p>
-                    <p id="modal-emp-id" style="font-weight: 600;">-</p>
+            <div class="modal-detail-row">
+                <div class="modal-detail-item">
+                    <div class="detail-label">Employee ID</div>
+                    <div class="detail-value" id="modal-emp-id">-</div>
                 </div>
-                <div>
-                    <p class="form-label">Department</p>
-                    <span id="modal-emp-dept" class="badge badge-dept">-</span>
+                <div class="modal-detail-item">
+                    <div class="detail-label">Department</div>
+                    <div class="detail-value"><span id="modal-emp-dept" class="badge badge-dept">-</span></div>
+                </div>
+            </div>
+
+            <div class="modal-detail-row" style="grid-template-columns: 1fr;">
+                <div class="modal-detail-item">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value" id="modal-emp-email">-</div>
                 </div>
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <p class="form-label">Email</p>
-                <p id="modal-emp-email">-</p>
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <p class="form-label">Skills</p>
+            <div class="modal-section">
+                <div class="modal-section-title">Skills</div>
                 <div id="modal-emp-skills"></div>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
-                <p class="form-label">Certifications</p>
+            <div class="modal-section">
+                <div class="modal-section-title">Certifications</div>
                 <div id="modal-emp-certs"></div>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
-                <p class="form-label">Assigned Projects</p>
-                <ul id="modal-emp-projects" style="padding-left: 1.2rem; color: var(--text-secondary);"></ul>
+            <div class="modal-section">
+                <div class="modal-section-title">Assigned Projects</div>
+                <ul id="modal-emp-projects" style="padding-left: 1.2rem; color: var(--text-secondary); font-size: 0.9rem;"></ul>
             </div>
         </div>
     </div>
@@ -83,14 +92,21 @@
             if (data.error) throw new Error(data.error);
 
             const tbody = document.querySelector('#employees-table tbody');
-            data.employees.forEach(emp => {
+            data.employees.forEach((emp, idx) => {
+                const initials = emp.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+                const colorIdx = idx % 6;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${emp.empId}</strong></td>
-                    <td>${emp.name}</td>
+                    <td><strong style="color: var(--accent-purple);">${emp.empId}</strong></td>
+                    <td>
+                        <div class="emp-name-cell">
+                            <div class="emp-avatar" data-color="${colorIdx}">${initials}</div>
+                            <span>${emp.name}</span>
+                        </div>
+                    </td>
                     <td><span class="badge badge-dept">${emp.department}</span></td>
-                    <td><a href="mailto:${emp.email}">${emp.email}</a></td>
-                    <td><button class="btn btn-sm btn-primary view-emp-btn" data-id="${emp.empId}">View Details</button></td>
+                    <td><a href="mailto:${emp.email}" style="font-size: 0.88rem;">${emp.email}</a></td>
+                    <td><button class="btn btn-sm btn-secondary view-emp-btn" data-id="${emp.empId}">View Details</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -108,7 +124,7 @@
             document.getElementById('employees-loading').style.display = 'none';
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-banner';
-            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading employees: ${error.message}</span>`;
+            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading employees: ${error.message}</span>`;
             document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('employees-container'));
         }
 
@@ -144,24 +160,24 @@
                 const skillsContainer = document.getElementById('modal-emp-skills');
                 skillsContainer.innerHTML = emp.skills.length > 0 
                     ? emp.skills.map(s => `<span class="badge badge-skill">${s}</span>`).join('') 
-                    : '<span style="color:var(--text-secondary)">None</span>';
+                    : '<span style="color:var(--text-tertiary); font-size: 0.88rem;">None</span>';
 
                 const certsContainer = document.getElementById('modal-emp-certs');
                 certsContainer.innerHTML = emp.certifications.length > 0 
                     ? emp.certifications.map(c => `<span class="badge badge-cert">${c}</span>`).join('') 
-                    : '<span style="color:var(--text-secondary)">None</span>';
+                    : '<span style="color:var(--text-tertiary); font-size: 0.88rem;">None</span>';
 
                 const projectsContainer = document.getElementById('modal-emp-projects');
                 projectsContainer.innerHTML = emp.projects.length > 0 
                     ? emp.projects.map(p => `<li>${p}</li>`).join('') 
-                    : '<li>None</li>';
+                    : '<li style="color:var(--text-tertiary);">None</li>';
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-body').style.display = 'block';
             } catch (error) {
                 console.error(error);
                 document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-body').innerHTML = `<div class="error-banner">Error: ${error.message}</div>`;
+                document.getElementById('modal-body').innerHTML = `<div class="error-banner"><span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span> ${error.message}</div>`;
                 document.getElementById('modal-body').style.display = 'block';
             }
         }
