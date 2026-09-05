@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Employees | Semantic Employee System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h2>Employee Directory</h2>
+    <p style="margin-bottom: 2rem; color: var(--text-secondary);">Complete list of employees retrieved via SPARQL from the knowledge graph.</p>
+
+    <div id="employees-loading" class="spinner"></div>
+
+    <div class="table-container" style="display: none;" id="employees-container">
+        <table id="employees-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Employee Detail Modal -->
+<div class="modal-overlay" id="employee-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-emp-name">Employee Details</h3>
+            <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+        <div id="modal-loading" class="spinner" style="display: none;"></div>
+        <div id="modal-body">
+            <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
+                <div>
+                    <p class="form-label">Employee ID</p>
+                    <p id="modal-emp-id" style="font-weight: 600;">-</p>
+                </div>
+                <div>
+                    <p class="form-label">Department</p>
+                    <span id="modal-emp-dept" class="badge badge-dept">-</span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <p class="form-label">Email</p>
+                <p id="modal-emp-email">-</p>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <p class="form-label">Skills</p>
+                <div id="modal-emp-skills"></div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <p class="form-label">Certifications</p>
+                <div id="modal-emp-certs"></div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <p class="form-label">Assigned Projects</p>
+                <ul id="modal-emp-projects" style="padding-left: 1.2rem; color: var(--text-secondary);"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Load Employees
+        try {
+            const response = await fetch('/api/employees');
+            if (!response.ok) throw new Error('Failed to fetch employees');
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+
+            const tbody = document.querySelector('#employees-table tbody');
+            data.employees.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${emp.empId}</strong></td>
+                    <td>${emp.name}</td>
+                    <td><span class="badge badge-dept">${emp.department}</span></td>
+                    <td><a href="mailto:${emp.email}">${emp.email}</a></td>
+                    <td><button class="btn btn-sm btn-primary view-emp-btn" data-id="${emp.empId}">View Details</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('employees-loading').style.display = 'none';
+            document.getElementById('employees-container').style.display = 'block';
+
+            // Attach event listeners to buttons
+            document.querySelectorAll('.view-emp-btn').forEach(btn => {
+                btn.addEventListener('click', () => openEmployeeModal(btn.dataset.id));
+            });
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('employees-loading').style.display = 'none';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-banner';
+            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading employees: ${error.message}</span>`;
+            document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('employees-container'));
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('employee-modal');
+        const closeBtn = document.getElementById('close-modal');
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+
+        async function openEmployeeModal(empId) {
+            modal.classList.add('active');
+            document.getElementById('modal-body').style.display = 'none';
+            document.getElementById('modal-loading').style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/employees/${empId}`);
+                if (!response.ok) throw new Error('Failed to fetch employee details');
+                const emp = await response.json();
+                
+                if (emp.error) throw new Error(emp.error);
+
+                document.getElementById('modal-emp-name').innerText = emp.name;
+                document.getElementById('modal-emp-id').innerText = emp.empId;
+                document.getElementById('modal-emp-dept').innerText = emp.department;
+                document.getElementById('modal-emp-email').innerHTML = `<a href="mailto:${emp.email}">${emp.email}</a>`;
+
+                const skillsContainer = document.getElementById('modal-emp-skills');
+                skillsContainer.innerHTML = emp.skills.length > 0 
+                    ? emp.skills.map(s => `<span class="badge badge-skill">${s}</span>`).join('') 
+                    : '<span style="color:var(--text-secondary)">None</span>';
+
+                const certsContainer = document.getElementById('modal-emp-certs');
+                certsContainer.innerHTML = emp.certifications.length > 0 
+                    ? emp.certifications.map(c => `<span class="badge badge-cert">${c}</span>`).join('') 
+                    : '<span style="color:var(--text-secondary)">None</span>';
+
+                const projectsContainer = document.getElementById('modal-emp-projects');
+                projectsContainer.innerHTML = emp.projects.length > 0 
+                    ? emp.projects.map(p => `<li>${p}</li>`).join('') 
+                    : '<li>None</li>';
+
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-body').style.display = 'block';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-body').innerHTML = `<div class="error-banner">Error: ${error.message}</div>`;
+                document.getElementById('modal-body').style.display = 'block';
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Semantic Employee System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Knowledge Graph Dashboard</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Overview of the company's semantic data and relationships.</p>
+    </div>
+
+    <div id="dashboard-loading" class="spinner"></div>
+
+    <div class="dashboard-grid" id="dashboard-stats" style="display: none;">
+        <div class="card stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-employees">0</div>
+            <div class="stat-label">Employees</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon">🧠</div>
+            <div class="stat-value" id="stat-skills">0</div>
+            <div class="stat-label">Skills</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-value" id="stat-departments">0</div>
+            <div class="stat-label">Departments</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon">📁</div>
+            <div class="stat-value" id="stat-projects">0</div>
+            <div class="stat-label">Projects</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon">📜</div>
+            <div class="stat-value" id="stat-certifications">0</div>
+            <div class="stat-label">Certifications</div>
+        </div>
+    </div>
+
+    <div class="card fade-in" style="margin-top: 2rem; animation-delay: 0.2s;">
+        <h2>Quick Actions</h2>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Explore the semantic relationships within your organization.</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/employees" class="btn btn-primary">View All Employees</a>
+            <a href="/search" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669);">Semantic Search</a>
+            <a href="/graph" class="btn btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">Explore Graph</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const response = await fetch('/api/dashboard');
+            if (!response.ok) throw new Error('Failed to fetch dashboard data');
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+
+            document.getElementById('stat-employees').innerText = data.employees;
+            document.getElementById('stat-skills').innerText = data.skills;
+            document.getElementById('stat-departments').innerText = data.departments;
+            document.getElementById('stat-projects').innerText = data.projects;
+            document.getElementById('stat-certifications').innerText = data.certifications;
+
+            document.getElementById('dashboard-loading').style.display = 'none';
+            document.getElementById('dashboard-stats').style.display = 'grid';
+        } catch (error) {
+            console.error(error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-banner';
+            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading dashboard: ${error.message}</span>`;
+            document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('dashboard-loading'));
+            document.getElementById('dashboard-loading').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

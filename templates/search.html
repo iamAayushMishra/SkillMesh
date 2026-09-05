@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Semantic Search | Semantic Employee System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h2>Semantic Search</h2>
+    <p style="margin-bottom: 2rem; color: var(--text-secondary);">Query the knowledge graph to find employees based on relationships (Skills, Departments, Certifications).</p>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <!-- Search by Skill -->
+            <div>
+                <label class="form-label">Search by Skill</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="skill-select" class="form-control">
+                        <option value="">Loading skills...</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="performSearch('skill')">Search</button>
+                </div>
+                <div id="related-skills-container" style="margin-top: 0.5rem; display: none;">
+                    <small style="color: var(--text-secondary);">Related Skills: <span id="related-skills-list"></span></small>
+                </div>
+            </div>
+
+            <!-- Search by Department -->
+            <div>
+                <label class="form-label">Search by Department</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="dept-select" class="form-control">
+                        <option value="">Loading departments...</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="performSearch('department')">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div id="search-loading" class="spinner" style="display: none;"></div>
+    
+    <div id="search-results-container" style="display: none;">
+        <h3 style="margin-bottom: 1rem;">Search Results (<span id="result-count">0</span>)</h3>
+        <div class="table-container">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Load Skills
+        try {
+            const res = await fetch('/api/skills');
+            const data = await res.json();
+            const select = document.getElementById('skill-select');
+            select.innerHTML = '<option value="">Select a skill...</option>';
+            data.skills.forEach(s => {
+                select.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+        } catch (e) { console.error('Failed to load skills', e); }
+
+        // Load Departments
+        try {
+            const res = await fetch('/api/departments');
+            const data = await res.json();
+            const select = document.getElementById('dept-select');
+            select.innerHTML = '<option value="">Select a department...</option>';
+            data.departments.forEach(d => {
+                select.innerHTML += `<option value="${d}">${d}</option>`;
+            });
+        } catch (e) { console.error('Failed to load departments', e); }
+    });
+
+    async function performSearch(type) {
+        let value = '';
+        if (type === 'skill') {
+            value = document.getElementById('skill-select').value;
+            fetchRelatedSkills(value);
+        } else if (type === 'department') {
+            value = document.getElementById('dept-select').value;
+            document.getElementById('related-skills-container').style.display = 'none';
+        }
+
+        if (!value) return alert(`Please select a ${type} to search.`);
+
+        document.getElementById('search-results-container').style.display = 'none';
+        document.getElementById('search-loading').style.display = 'block';
+
+        try {
+            const response = await fetch(`/api/search/employees?${type}=${encodeURIComponent(value)}`);
+            if (!response.ok) throw new Error('Search failed');
+            const data = await response.json();
+
+            document.getElementById('result-count').innerText = data.count;
+            const tbody = document.querySelector('#results-table tbody');
+            tbody.innerHTML = '';
+
+            if (data.count === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No employees found matching this criteria.</td></tr>';
+            } else {
+                data.results.forEach(emp => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${emp.empId}</strong></td>
+                            <td>${emp.name}</td>
+                            <td><span class="badge badge-dept">${emp.department}</span></td>
+                            <td><a href="mailto:${emp.email}">${emp.email}</a></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('search-loading').style.display = 'none';
+            document.getElementById('search-results-container').style.display = 'block';
+        } catch (error) {
+            console.error(error);
+            alert('Error performing search: ' + error.message);
+            document.getElementById('search-loading').style.display = 'none';
+        }
+    }
+
+    async function fetchRelatedSkills(skill) {
+        if (!skill) return;
+        try {
+            const res = await fetch(`/api/search/related-skills?skill=${encodeURIComponent(skill)}`);
+            const data = await res.json();
+            const container = document.getElementById('related-skills-container');
+            const list = document.getElementById('related-skills-list');
+            
+            if (data.relatedSkills && data.relatedSkills.length > 0) {
+                list.innerHTML = data.relatedSkills.map(s => `<span class="badge badge-skill" style="cursor:pointer;" onclick="setSearchSkill('${s}')">${s}</span>`).join(' ');
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        } catch (e) { console.error('Failed to load related skills', e); }
+    }
+
+    window.setSearchSkill = function(skillName) {
+        document.getElementById('skill-select').value = skillName;
+        performSearch('skill');
+    };
+</script>
+{% endblock %}

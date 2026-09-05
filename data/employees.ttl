@@ -1,0 +1,243 @@
+@prefix :     <http://example.org/employee#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ============================================================
+# SKILLS
+# ============================================================
+
+:Python rdf:type :Skill ;
+    :skillName "Python" .
+
+:Java rdf:type :Skill ;
+    :skillName "Java" .
+
+:MachineLearning rdf:type :Skill ;
+    :skillName "Machine Learning" .
+
+:ArtificialIntelligence rdf:type :Skill ;
+    :skillName "Artificial Intelligence" .
+
+:SQL rdf:type :Skill ;
+    :skillName "SQL" .
+
+:JavaScript rdf:type :Skill ;
+    :skillName "JavaScript" .
+
+:RDFSkill rdf:type :Skill ;
+    :skillName "RDF" .
+
+:SPARQLSkill rdf:type :Skill ;
+    :skillName "SPARQL" .
+
+# ============================================================
+# SKILL RELATIONSHIPS
+# ============================================================
+
+:Python :relatedTo :MachineLearning , :ArtificialIntelligence .
+:MachineLearning :relatedTo :ArtificialIntelligence , :SQL .
+:JavaScript :relatedTo :Java .
+:RDFSkill :relatedTo :SPARQLSkill , :Python .
+:SPARQLSkill :relatedTo :SQL .
+
+# ============================================================
+# DEPARTMENTS
+# ============================================================
+
+:AIDepartment rdf:type :Department ;
+    :deptName "AI Department" .
+
+:SoftwareDevelopment rdf:type :Department ;
+    :deptName "Software Development" .
+
+:DataScience rdf:type :Department ;
+    :deptName "Data Science" .
+
+:HR rdf:type :Department ;
+    :deptName "HR" .
+
+# ============================================================
+# PROJECTS
+# ============================================================
+
+:AIChatbot rdf:type :Project ;
+    :projectName "AI Chatbot" ;
+    :projectDescription "An AI-powered chatbot for customer support" ;
+    :requiresSkill :Python , :ArtificialIntelligence , :MachineLearning .
+
+:EmployeeAnalytics rdf:type :Project ;
+    :projectName "Employee Analytics" ;
+    :projectDescription "Analytics dashboard for employee performance" ;
+    :requiresSkill :Python , :SQL , :MachineLearning .
+
+:SemanticSearchSystem rdf:type :Project ;
+    :projectName "Semantic Search System" ;
+    :projectDescription "A search system using semantic web technologies" ;
+    :requiresSkill :Python , :RDFSkill , :SPARQLSkill .
+
+# ============================================================
+# DEPARTMENT → PROJECT RELATIONSHIPS
+# ============================================================
+
+:AIDepartment :handlesProject :AIChatbot .
+:DataScience :handlesProject :EmployeeAnalytics .
+:SoftwareDevelopment :handlesProject :SemanticSearchSystem .
+
+# ============================================================
+# CERTIFICATIONS
+# ============================================================
+
+:PythonCertification rdf:type :Certification ;
+    :certName "Python Certification" ;
+    :certifiesSkill :Python .
+
+:AWSCertification rdf:type :Certification ;
+    :certName "AWS Certification" ;
+    :certifiesSkill :Java .
+
+:DataScienceCertification rdf:type :Certification ;
+    :certName "Data Science Certification" ;
+    :certifiesSkill :MachineLearning .
+
+:MLCertification rdf:type :Certification ;
+    :certName "Machine Learning Certification" ;
+    :certifiesSkill :MachineLearning .
+
+:JavaCertification rdf:type :Certification ;
+    :certName "Java Certification" ;
+    :certifiesSkill :Java .
+
+# ============================================================
+# EMPLOYEES
+# ============================================================
+
+:EMP001 rdf:type :Employee ;
+    :employeeId "EMP001" ;
+    :name "Aayush Kumar" ;
+    :email "aayush@company.com" ;
+    :worksIn :AIDepartment ;
+    :hasSkill :Python , :MachineLearning , :ArtificialIntelligence ;
+    :hasCertification :PythonCertification , :DataScienceCertification ;
+    :worksOn :AIChatbot .
+
+:EMP002 rdf:type :Employee ;
+    :employeeId "EMP002" ;
+    :name "Priya Sharma" ;
+    :email "priya@company.com" ;
+    :worksIn :DataScience ;
+    :hasSkill :Python , :SQL , :MachineLearning ;
+    :hasCertification :DataScienceCertification ;
+    :worksOn :EmployeeAnalytics .
+
+:EMP003 rdf:type :Employee ;
+    :employeeId "EMP003" ;
+    :name "Rahul Verma" ;
+    :email "rahul@company.com" ;
+    :worksIn :SoftwareDevelopment ;
+    :hasSkill :Java , :JavaScript , :SQL ;
+    :hasCertification :AWSCertification ;
+    :worksOn :SemanticSearchSystem .
+
+:EMP004 rdf:type :Employee ;
+    :employeeId "EMP004" ;
+    :name "Sneha Patel" ;
+    :email "sneha@company.com" ;
+    :worksIn :AIDepartment ;
+    :hasSkill :Python , :ArtificialIntelligence , :RDFSkill ;
+    :hasCertification :PythonCertification ;
+    :worksOn :AIChatbot .
+
+:EMP005 rdf:type :Employee ;
+    :employeeId "EMP005" ;
+    :name "Vikram Singh" ;
+    :email "vikram@company.com" ;
+    :worksIn :SoftwareDevelopment ;
+    :hasSkill :Java , :JavaScript , :SPARQLSkill ;
+    :worksOn :SemanticSearchSystem .
+
+:EMP006 rdf:type :Employee ;
+    :employeeId "EMP006" ;
+    :name "Ananya Gupta" ;
+    :email "ananya@company.com" ;
+    :worksIn :DataScience ;
+    :hasSkill :Python , :SQL , :SPARQLSkill ;
+    :hasCertification :DataScienceCertification ;
+    :worksOn :EmployeeAnalytics .
+
+:EMP007 rdf:type :Employee ;
+    :employeeId "EMP007" ;
+    :name "Rohan Desai" ;
+    :email "rohan@company.com" ;
+    :worksIn :HR ;
+    :hasSkill :JavaScript , :SQL .
+
+:EMP008 rdf:type :Employee ;
+    :employeeId "EMP008" ;
+    :name "Meera Nair" ;
+    :email "meera@company.com" ;
+    :worksIn :AIDepartment ;
+    :hasSkill :Python , :MachineLearning , :SPARQLSkill ;
+    :hasCertification :MLCertification ;
+    :worksOn :AIChatbot .
+
+:EMP009 rdf:type :Employee ;
+    :employeeId "EMP009" ;
+    :name "Arjun Reddy" ;
+    :email "arjun@company.com" ;
+    :worksIn :SoftwareDevelopment ;
+    :hasSkill :Java , :Python , :SQL ;
+    :hasCertification :JavaCertification ;
+    :worksOn :SemanticSearchSystem .
+
+:EMP010 rdf:type :Employee ;
+    :employeeId "EMP010" ;
+    :name "Kavita Joshi" ;
+    :email "kavita@company.com" ;
+    :worksIn :DataScience ;
+    :hasSkill :Python , :MachineLearning , :ArtificialIntelligence ;
+    :hasCertification :DataScienceCertification , :MLCertification ;
+    :worksOn :EmployeeAnalytics .
+
+:EMP011 rdf:type :Employee ;
+    :employeeId "EMP011" ;
+    :name "Deepak Mehta" ;
+    :email "deepak@company.com" ;
+    :worksIn :SoftwareDevelopment ;
+    :hasSkill :JavaScript , :Java , :RDFSkill ;
+    :hasCertification :AWSCertification ;
+    :worksOn :SemanticSearchSystem .
+
+:EMP012 rdf:type :Employee ;
+    :employeeId "EMP012" ;
+    :name "Ishita Roy" ;
+    :email "ishita@company.com" ;
+    :worksIn :HR ;
+    :hasSkill :SQL , :JavaScript .
+
+:EMP013 rdf:type :Employee ;
+    :employeeId "EMP013" ;
+    :name "Nikhil Rao" ;
+    :email "nikhil@company.com" ;
+    :worksIn :AIDepartment ;
+    :hasSkill :Python , :ArtificialIntelligence , :MachineLearning ;
+    :hasCertification :PythonCertification , :MLCertification ;
+    :worksOn :AIChatbot .
+
+:EMP014 rdf:type :Employee ;
+    :employeeId "EMP014" ;
+    :name "Sanya Kapoor" ;
+    :email "sanya@company.com" ;
+    :worksIn :DataScience ;
+    :hasSkill :SQL , :Python , :SPARQLSkill ;
+    :hasCertification :DataScienceCertification ;
+    :worksOn :EmployeeAnalytics .
+
+:EMP015 rdf:type :Employee ;
+    :employeeId "EMP015" ;
+    :name "Amit Tiwari" ;
+    :email "amit@company.com" ;
+    :worksIn :SoftwareDevelopment ;
+    :hasSkill :Java , :JavaScript , :Python ;
+    :hasCertification :JavaCertification , :AWSCertification ;
+    :worksOn :SemanticSearchSystem .

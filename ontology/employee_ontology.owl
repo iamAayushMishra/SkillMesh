@@ -1,0 +1,133 @@
+@prefix :     <http://example.org/employee#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# ============================================================
+# ONTOLOGY DECLARATION
+# ============================================================
+
+<http://example.org/employee> rdf:type owl:Ontology ;
+    rdfs:label "Employee Skill Management Ontology" ;
+    rdfs:comment "Ontology for managing employees, skills, departments, projects, and certifications." .
+
+# ============================================================
+# CLASSES
+# ============================================================
+
+:Employee rdf:type owl:Class ;
+    rdfs:label "Employee" ;
+    rdfs:comment "A person who works in the organization." .
+
+:Skill rdf:type owl:Class ;
+    rdfs:label "Skill" ;
+    rdfs:comment "A technical or professional skill." .
+
+:Department rdf:type owl:Class ;
+    rdfs:label "Department" ;
+    rdfs:comment "An organizational department." .
+
+:Project rdf:type owl:Class ;
+    rdfs:label "Project" ;
+    rdfs:comment "A company project that requires certain skills." .
+
+:Certification rdf:type owl:Class ;
+    rdfs:label "Certification" ;
+    rdfs:comment "A professional certification held by an employee." .
+
+# ============================================================
+# OBJECT PROPERTIES (entity-to-entity relationships)
+# ============================================================
+
+:hasSkill rdf:type owl:ObjectProperty ;
+    rdfs:label "has skill" ;
+    rdfs:comment "Links an employee to a skill they possess." ;
+    rdfs:domain :Employee ;
+    rdfs:range :Skill .
+
+:worksIn rdf:type owl:ObjectProperty ;
+    rdfs:label "works in" ;
+    rdfs:comment "Links an employee to their department." ;
+    rdfs:domain :Employee ;
+    rdfs:range :Department .
+
+:hasCertification rdf:type owl:ObjectProperty ;
+    rdfs:label "has certification" ;
+    rdfs:comment "Links an employee to a certification they hold." ;
+    rdfs:domain :Employee ;
+    rdfs:range :Certification .
+
+:worksOn rdf:type owl:ObjectProperty ;
+    rdfs:label "works on" ;
+    rdfs:comment "Links an employee to a project they are assigned to." ;
+    rdfs:domain :Employee ;
+    rdfs:range :Project .
+
+:requiresSkill rdf:type owl:ObjectProperty ;
+    rdfs:label "requires skill" ;
+    rdfs:comment "Links a project to a skill it requires." ;
+    rdfs:domain :Project ;
+    rdfs:range :Skill .
+
+:relatedTo rdf:type owl:ObjectProperty ;
+    rdfs:label "related to" ;
+    rdfs:comment "Links a skill to another related skill." ;
+    rdfs:domain :Skill ;
+    rdfs:range :Skill .
+
+:handlesProject rdf:type owl:ObjectProperty ;
+    rdfs:label "handles project" ;
+    rdfs:comment "Links a department to a project it manages." ;
+    rdfs:domain :Department ;
+    rdfs:range :Project .
+
+:certifiesSkill rdf:type owl:ObjectProperty ;
+    rdfs:label "certifies skill" ;
+    rdfs:comment "Links a certification to the skill it validates." ;
+    rdfs:domain :Certification ;
+    rdfs:range :Skill .
+
+# ============================================================
+# DATA PROPERTIES (entity-to-literal attributes)
+# ============================================================
+
+:employeeId rdf:type owl:DatatypeProperty ;
+    rdfs:label "employee ID" ;
+    rdfs:domain :Employee ;
+    rdfs:range xsd:string .
+
+:name rdf:type owl:DatatypeProperty ;
+    rdfs:label "name" ;
+    rdfs:domain :Employee ;
+    rdfs:range xsd:string .
+
+:email rdf:type owl:DatatypeProperty ;
+    rdfs:label "email" ;
+    rdfs:domain :Employee ;
+    rdfs:range xsd:string .
+
+:skillName rdf:type owl:DatatypeProperty ;
+    rdfs:label "skill name" ;
+    rdfs:domain :Skill ;
+    rdfs:range xsd:string .
+
+:deptName rdf:type owl:DatatypeProperty ;
+    rdfs:label "department name" ;
+    rdfs:domain :Department ;
+    rdfs:range xsd:string .
+
+:projectName rdf:type owl:DatatypeProperty ;
+    rdfs:label "project name" ;
+    rdfs:domain :Project ;
+    rdfs:range xsd:string .
+
+:projectDescription rdf:type owl:DatatypeProperty ;
+    rdfs:label "project description" ;
+    rdfs:domain :Project ;
+    rdfs:range xsd:string .
+
+:certName rdf:type owl:DatatypeProperty ;
+    rdfs:label "certification name" ;
+    rdfs:domain :Certification ;
+    rdfs:range xsd:string .

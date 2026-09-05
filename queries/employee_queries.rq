@@ -1,0 +1,107 @@
+# QUERY: all_employees
+# Returns all employees with basic info
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?empId ?name ?email ?deptName
+WHERE {
+    ?emp rdf:type :Employee .
+    ?emp :employeeId ?empId .
+    ?emp :name ?name .
+    ?emp :email ?email .
+    ?emp :worksIn ?dept .
+    ?dept :deptName ?deptName .
+}
+ORDER BY ?empId
+
+# ============================================================
+
+# QUERY: employee_by_id
+# Returns detailed info for a specific employee
+# Parameter: EMPLOYEE_ID (e.g., "EMP001")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?name ?email ?deptName
+#        (GROUP_CONCAT(DISTINCT ?skillName; separator=", ") AS ?skills)
+#        (GROUP_CONCAT(DISTINCT ?certName; separator=", ") AS ?certifications)
+#        (GROUP_CONCAT(DISTINCT ?projName; separator=", ") AS ?projects)
+# WHERE {
+#     ?emp rdf:type :Employee .
+#     ?emp :employeeId ?empId .
+#     ?emp :name ?name .
+#     ?emp :email ?email .
+#     ?emp :worksIn ?dept .
+#     ?dept :deptName ?deptName .
+#     OPTIONAL { ?emp :hasSkill ?skill . ?skill :skillName ?skillName . }
+#     OPTIONAL { ?emp :hasCertification ?cert . ?cert :certName ?certName . }
+#     OPTIONAL { ?emp :worksOn ?proj . ?proj :projectName ?projName . }
+#     FILTER(?empId = "EMPLOYEE_ID")
+# }
+# GROUP BY ?name ?email ?deptName
+
+# ============================================================
+
+# QUERY: employees_by_skill
+# Finds employees with a specific skill
+# Parameter: SKILL_NAME (e.g., "Python")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?empId ?name ?email ?deptName
+# WHERE {
+#     ?emp rdf:type :Employee .
+#     ?emp :employeeId ?empId .
+#     ?emp :name ?name .
+#     ?emp :email ?email .
+#     ?emp :worksIn ?dept .
+#     ?dept :deptName ?deptName .
+#     ?emp :hasSkill ?skill .
+#     ?skill :skillName ?skillName .
+#     FILTER(?skillName = "SKILL_NAME")
+# }
+# ORDER BY ?name
+
+# ============================================================
+
+# QUERY: employees_by_department
+# Finds employees in a specific department
+# Parameter: DEPT_NAME (e.g., "AI Department")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?empId ?name ?email
+# WHERE {
+#     ?emp rdf:type :Employee .
+#     ?emp :employeeId ?empId .
+#     ?emp :name ?name .
+#     ?emp :email ?email .
+#     ?emp :worksIn ?dept .
+#     ?dept :deptName ?deptName .
+#     FILTER(?deptName = "DEPT_NAME")
+# }
+# ORDER BY ?name
+
+# ============================================================
+
+# QUERY: employees_by_certification
+# Finds employees with a specific certification
+# Parameter: CERT_NAME (e.g., "AWS Certification")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?empId ?name ?email ?certName
+# WHERE {
+#     ?emp rdf:type :Employee .
+#     ?emp :employeeId ?empId .
+#     ?emp :name ?name .
+#     ?emp :email ?email .
+#     ?emp :hasCertification ?cert .
+#     ?cert :certName ?certName .
+#     FILTER(?certName = "CERT_NAME")
+# }
+# ORDER BY ?name

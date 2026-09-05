@@ -1,0 +1,19 @@
+# ============================================================
+# Python Dependencies
+# Semantic Employee & Skill Management System
+# ============================================================
+
+# Web Framework
+Flask==3.1.1
+
+# HTTP Requests (for SPARQL communication with Fuseki)
+requests==2.32.3
+
+# RDF Library (local RDF parsing & validation)
+rdflib==7.1.4
+
+# Testing Framework
+pytest==8.3.5
+
+# Environment variable loading
+python-dotenv==1.1.0

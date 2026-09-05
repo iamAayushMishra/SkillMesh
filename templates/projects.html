@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Projects | Semantic Employee System{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h2>Projects & Candidate Matching</h2>
+    <p style="margin-bottom: 2rem; color: var(--text-secondary);">View company projects and semantically match employees based on required skills.</p>
+
+    <div id="projects-loading" class="spinner"></div>
+
+    <div id="projects-container" style="display: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+        <!-- Populated by JS -->
+    </div>
+</div>
+
+<!-- Candidates Modal -->
+<div class="modal-overlay" id="candidates-modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 id="modal-project-name">Project Candidates</h3>
+            <button class="close-btn" id="close-modal">&times;</button>
+        </div>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">Employees matched based on the project's required skills.</p>
+        
+        <div id="modal-loading" class="spinner" style="display: none;"></div>
+        
+        <div id="modal-body">
+            <div class="table-container">
+                <table id="candidates-table">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Matches</th>
+                            <th>Matching Skills</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Load Projects
+        try {
+            const response = await fetch('/api/projects');
+            if (!response.ok) throw new Error('Failed to fetch projects');
+            const data = await response.json();
+            
+            const container = document.getElementById('projects-container');
+            container.innerHTML = '';
+            
+            data.projects.forEach(proj => {
+                const requiredSkillsHTML = proj.requiredSkills.map(s => `<span class="badge badge-skill">${s}</span>`).join('');
+                
+                const card = document.createElement('div');
+                card.className = 'card fade-in';
+                card.innerHTML = `
+                    <h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">${proj.name}</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem;">${proj.description}</p>
+                    <div style="margin-bottom: 1.5rem;">
+                        <span style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Required Skills:</span>
+                        ${requiredSkillsHTML || '<span style="color:var(--text-secondary)">None specified</span>'}
+                    </div>
+                    <button class="btn btn-primary match-btn" style="width: 100%;" data-project="${proj.name}">
+                        Find Candidates
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('projects-loading').style.display = 'none';
+            container.style.display = 'grid';
+
+            // Attach event listeners to buttons
+            document.querySelectorAll('.match-btn').forEach(btn => {
+                btn.addEventListener('click', () => openCandidatesModal(btn.dataset.project));
+            });
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('projects-loading').style.display = 'none';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-banner';
+            errorDiv.innerHTML = `<span class="error-icon">⚠️</span><span>Error loading projects: ${error.message}</span>`;
+            document.querySelector('.main-content').appendChild(errorDiv);
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('candidates-modal');
+        const closeBtn = document.getElementById('close-modal');
+
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+
+        async function openCandidatesModal(projectName) {
+            modal.classList.add('active');
+            document.getElementById('modal-project-name').innerText = `Candidates for: ${projectName}`;
+            document.getElementById('modal-body').style.display = 'none';
+            document.getElementById('modal-loading').style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/projects/${encodeURIComponent(projectName)}/candidates`);
+                if (!response.ok) throw new Error('Failed to fetch candidates');
+                const data = await response.json();
+                
+                const tbody = document.querySelector('#candidates-table tbody');
+                tbody.innerHTML = '';
+
+                if (!data.candidates || data.candidates.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No matching candidates found.</td></tr>';
+                } else {
+                    data.candidates.forEach(cand => {
+                        const skillsArray = cand.skills ? cand.skills.split(',') : [];
+                        const skillsHTML = skillsArray.map(s => `<span class="badge badge-skill">${s.trim()}</span>`).join('');
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${cand.empId}</strong></td>
+                                <td>${cand.name}</td>
+                                <td><span style="font-weight: 700; color: var(--primary-color);">${cand.matchingSkills}</span></td>
+                                <td>${skillsHTML}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-body').style.display = 'block';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-body').innerHTML = `<div class="error-banner">Error: ${error.message}</div>`;
+                document.getElementById('modal-body').style.display = 'block';
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+# QUERY: all_departments
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?deptName
+WHERE {
+    ?dept rdf:type :Department .
+    ?dept :deptName ?deptName .
+}
+ORDER BY ?deptName

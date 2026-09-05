@@ -1,0 +1,17 @@
+# QUERY: dashboard_counts
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT
+    (COUNT(DISTINCT ?emp) AS ?employeeCount)
+    (COUNT(DISTINCT ?skill) AS ?skillCount)
+    (COUNT(DISTINCT ?dept) AS ?deptCount)
+    (COUNT(DISTINCT ?project) AS ?projectCount)
+    (COUNT(DISTINCT ?cert) AS ?certCount)
+WHERE {
+    { ?emp rdf:type :Employee . }
+    UNION { ?skill rdf:type :Skill . }
+    UNION { ?dept rdf:type :Department . }
+    UNION { ?project rdf:type :Project . }
+    UNION { ?cert rdf:type :Certification . }
+}

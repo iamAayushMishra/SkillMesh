@@ -1,0 +1,79 @@
+# QUERY: graph_data
+# Returns all relationships for Cytoscape.js visualization
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?source ?sourceLabel ?sourceType ?relationship ?target ?targetLabel ?targetType
+WHERE {
+    {
+        ?s rdf:type :Employee .
+        ?s :name ?sourceLabel .
+        ?s :hasSkill ?t .
+        ?t :skillName ?targetLabel .
+        BIND("Employee" AS ?sourceType)
+        BIND("Skill" AS ?targetType)
+        BIND("hasSkill" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+    UNION
+    {
+        ?s rdf:type :Employee .
+        ?s :name ?sourceLabel .
+        ?s :worksIn ?t .
+        ?t :deptName ?targetLabel .
+        BIND("Employee" AS ?sourceType)
+        BIND("Department" AS ?targetType)
+        BIND("worksIn" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+    UNION
+    {
+        ?s rdf:type :Employee .
+        ?s :name ?sourceLabel .
+        ?s :worksOn ?t .
+        ?t :projectName ?targetLabel .
+        BIND("Employee" AS ?sourceType)
+        BIND("Project" AS ?targetType)
+        BIND("worksOn" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+    UNION
+    {
+        ?s rdf:type :Skill .
+        ?s :skillName ?sourceLabel .
+        ?s :relatedTo ?t .
+        ?t :skillName ?targetLabel .
+        BIND("Skill" AS ?sourceType)
+        BIND("Skill" AS ?targetType)
+        BIND("relatedTo" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+    UNION
+    {
+        ?s rdf:type :Department .
+        ?s :deptName ?sourceLabel .
+        ?s :handlesProject ?t .
+        ?t :projectName ?targetLabel .
+        BIND("Department" AS ?sourceType)
+        BIND("Project" AS ?targetType)
+        BIND("handlesProject" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+    UNION
+    {
+        ?s rdf:type :Project .
+        ?s :projectName ?sourceLabel .
+        ?s :requiresSkill ?t .
+        ?t :skillName ?targetLabel .
+        BIND("Project" AS ?sourceType)
+        BIND("Skill" AS ?targetType)
+        BIND("requiresSkill" AS ?relationship)
+        BIND(STR(?s) AS ?source)
+        BIND(STR(?t) AS ?target)
+    }
+}

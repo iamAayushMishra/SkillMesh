@@ -1,0 +1,28 @@
+# QUERY: all_skills
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?skillName
+WHERE {
+    ?skill rdf:type :Skill .
+    ?skill :skillName ?skillName .
+}
+ORDER BY ?skillName
+
+# ============================================================
+
+# QUERY: related_skills
+# Finds skills related to a given skill
+# Parameter: SKILL_NAME (e.g., "Python")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?relatedSkillName
+# WHERE {
+#     ?skill rdf:type :Skill .
+#     ?skill :skillName ?skillName .
+#     ?skill :relatedTo ?relatedSkill .
+#     ?relatedSkill :skillName ?relatedSkillName .
+#     FILTER(?skillName = "SKILL_NAME")
+# }

@@ -1,0 +1,59 @@
+# QUERY: all_projects
+PREFIX : <http://example.org/employee#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?projectName ?projectDescription
+       (GROUP_CONCAT(?skillName; separator=", ") AS ?requiredSkills)
+WHERE {
+    ?project rdf:type :Project .
+    ?project :projectName ?projectName .
+    ?project :projectDescription ?projectDescription .
+    ?project :requiresSkill ?skill .
+    ?skill :skillName ?skillName .
+}
+GROUP BY ?projectName ?projectDescription
+ORDER BY ?projectName
+
+# ============================================================
+
+# QUERY: project_candidates
+# Finds employees matching a project's required skills
+# Parameter: PROJECT_NAME (e.g., "AI Chatbot")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?empId ?name (COUNT(?skill) AS ?matchingSkills)
+#        (GROUP_CONCAT(?skillName; separator=", ") AS ?skills)
+# WHERE {
+#     ?project rdf:type :Project .
+#     ?project :projectName ?projName .
+#     ?project :requiresSkill ?skill .
+#     ?emp rdf:type :Employee .
+#     ?emp :employeeId ?empId .
+#     ?emp :name ?name .
+#     ?emp :hasSkill ?skill .
+#     ?skill :skillName ?skillName .
+#     FILTER(?projName = "PROJECT_NAME")
+# }
+# GROUP BY ?empId ?name
+# ORDER BY DESC(?matchingSkills)
+
+# ============================================================
+
+# QUERY: projects_by_department
+# Finds projects handled by a specific department
+# Parameter: DEPT_NAME (e.g., "AI Department")
+
+# PREFIX : <http://example.org/employee#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#
+# SELECT ?projectName ?projectDescription
+# WHERE {
+#     ?dept rdf:type :Department .
+#     ?dept :deptName ?deptName .
+#     ?dept :handlesProject ?project .
+#     ?project :projectName ?projectName .
+#     ?project :projectDescription ?projectDescription .
+#     FILTER(?deptName = "DEPT_NAME")
+# }
