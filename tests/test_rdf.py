@@ -36,9 +36,9 @@ def test_ontology_object_properties(ontology_graph):
     assert EMP.worksOn in obj_props
 
 def test_data_employees_count(data_graph):
-    """Test that we have exactly 15 employees loaded."""
+    """Test that we have at least 15 employees loaded."""
     employees = list(data_graph.subjects(RDF.type, EMP.Employee))
-    assert len(employees) == 15, f"Expected 15 employees, found {len(employees)}"
+    assert len(employees) >= 15, f"Expected at least 15 employees, found {len(employees)}"
 
 def test_data_skills_count(data_graph):
     """Test that we have exactly 8 skills loaded."""

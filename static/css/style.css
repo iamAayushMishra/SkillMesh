@@ -1122,3 +1122,197 @@ select.form-control {
 
     .nav-brand .nav-title { display: none; }
 }
+
+
+/* ============================================================
+   FORM EXTENSIONS & INTERACTIVE CHIPS
+   ============================================================ */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-hint {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+}
+
+.chip-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--bg-input);
+    border: 1.5px solid var(--border-color);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-fast);
+}
+
+.chip-label input[type="checkbox"] {
+    display: none;
+}
+
+.chip-label:hover {
+    border-color: var(--accent-purple);
+    background: var(--accent-purple-light);
+    color: var(--accent-purple-dark);
+}
+
+.chip-label.selected,
+.chip-label:has(input[type="checkbox"]:checked) {
+    background: var(--accent-purple-light);
+    border-color: var(--accent-purple);
+    color: var(--accent-purple-dark);
+    font-weight: 600;
+}
+
+.project-select-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 0.3rem;
+}
+
+.project-select-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.project-select-item:hover {
+    border-color: var(--accent-purple);
+    background: #faf9ff;
+}
+
+.project-select-item:has(input:checked) {
+    border-color: var(--accent-purple);
+    background: #f7f5ff;
+    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.12);
+}
+
+.project-select-item input[type="checkbox"] {
+    margin-top: 0.25rem;
+    accent-color: var(--accent-purple);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.project-select-info {
+    flex: 1;
+}
+
+.project-select-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.15rem;
+}
+
+.project-select-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    line-height: 1.35;
+}
+
+.project-select-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
+.toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    pointer-events: none;
+}
+
+.toast {
+    background: var(--text-primary);
+    color: #ffffff;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    pointer-events: auto;
+}
+
+.toast.toast-success {
+    background: #0f172a;
+    border-left: 4px solid var(--success);
+}
+
+.toast.toast-error {
+    background: #0f172a;
+    border-left: 4px solid var(--danger);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+

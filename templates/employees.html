@@ -6,10 +6,33 @@
 <div class="fade-in">
     <!-- Page Header -->
     <div class="page-header">
-        <div class="page-header-row">
+        <div class="page-header-row"
+            style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
             <div>
                 <h1>Employee Directory</h1>
-                <p class="page-subtitle">Complete list of employees retrieved via SPARQL from the knowledge graph.</p>
+                <p class="page-subtitle">Manage company workforce and assign projects semantically using the knowledge
+                    graph.</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button class="btn btn-primary btn-new" id="open-add-emp-btn">
+                    <span class="material-symbols-rounded" style="font-size:1.15rem;">person_add</span>
+                    Add Employee
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search / Filter Bar -->
+    <div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+        <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex: 1; min-width: 260px;">
+                <span class="material-symbols-rounded" style="color: var(--text-tertiary);">search</span>
+                <input type="text" id="emp-filter-input" class="form-control"
+                    placeholder="Search by name, ID, department, or project..." style="max-width: 450px;">
+            </div>
+            <div style="color: var(--text-secondary); font-size: 0.88rem; font-weight: 500;">
+                Showing <span id="emp-count-badge" style="font-weight: 700; color: var(--accent-purple);">0</span>
+                employees
             </div>
         </div>
     </div>
@@ -24,7 +47,8 @@
                     <th>Name</th>
                     <th>Department</th>
                     <th>Email</th>
-                    <th>Action</th>
+                    <th>Assigned Projects</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,7 +58,136 @@
     </div>
 </div>
 
-<!-- Employee Detail Modal -->
+<!-- ============================================================ -->
+<!-- MODAL 1: Add Employee Modal                                    -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="add-employee-modal">
+    <div class="modal-content" style="max-width: 680px;">
+        <div class="modal-header">
+            <div>
+                <h3>Add New Employee</h3>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">Create an employee entity in the
+                    RDF knowledge graph.</p>
+            </div>
+            <button class="close-btn" id="close-add-modal">&times;</button>
+        </div>
+
+        <div id="add-modal-alert" class="error-banner" style="display: none; margin-bottom: 1rem;"></div>
+
+        <form id="add-employee-form">
+            <div class="form-grid-2">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label class="form-label" for="add-emp-id">Employee ID *</label>
+                    <div class="input-with-button">
+                        <input type="text" id="add-emp-id" class="form-control" placeholder="EMP016" required>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-fetch-next-id"
+                            title="Generate next available ID">Auto</button>
+                    </div>
+                    <div class="form-hint">Unique identifier (letters, numbers, hyphens)</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label class="form-label" for="add-emp-name">Full Name *</label>
+                    <input type="text" id="add-emp-name" class="form-control" placeholder="e.g. Alex Morgan" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label class="form-label" for="add-emp-email">Email Address *</label>
+                    <input type="email" id="add-emp-email" class="form-control" placeholder="alex@company.com" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label class="form-label" for="add-emp-dept">Department *</label>
+                    <select id="add-emp-dept" class="form-control" required>
+                        <option value="">Select a department...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Assign Projects Section -->
+            <div class="modal-section" style="margin-top: 1rem;">
+                <div class="modal-section-title"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Assign Projects</span>
+                    <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-tertiary);">Select active
+                        projects</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">The employee will be
+                    linked via <code>:worksOn</code> to each selected project.</p>
+                <div id="add-emp-projects-list" class="project-select-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Technical Skills Section -->
+            <div class="modal-section">
+                <div class="modal-section-title">Technical Skills</div>
+                <div id="add-emp-skills-chips" class="chips-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Certifications Section -->
+            <div class="modal-section">
+                <div class="modal-section-title">Certifications (Optional)</div>
+                <div id="add-emp-certs-chips" class="chips-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div
+                style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                <button type="button" class="btn btn-secondary" id="cancel-add-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submit-add-btn">
+                    <span class="material-symbols-rounded" style="font-size: 1.1rem;">check_circle</span>
+                    Save Employee
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL 2: Assign Projects Modal                                 -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="assign-projects-modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <div>
+                <h3 id="assign-modal-title">Assign Projects</h3>
+                <p id="assign-modal-subtitle" style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">
+                    Update project assignments for this employee.</p>
+            </div>
+            <button class="close-btn" id="close-assign-modal">&times;</button>
+        </div>
+
+        <div id="assign-modal-alert" class="error-banner" style="display: none; margin-bottom: 1rem;"></div>
+
+        <div style="margin-bottom: 1.25rem;">
+            <div class="modal-section-title">Available Projects</div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.6rem;">Check the projects you
+                wish to assign this employee to. Uncheck to unassign.</p>
+            <div id="assign-projects-list" class="project-select-list" style="max-height: 280px;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <div
+            style="display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+            <button type="button" class="btn btn-secondary" id="cancel-assign-btn">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-assign-btn">
+                <span class="material-symbols-rounded" style="font-size: 1.1rem;">save</span>
+                Save Project Assignments
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL 3: Employee Detail Modal                                 -->
+<!-- ============================================================ -->
 <div class="modal-overlay" id="employee-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -60,7 +213,7 @@
                     <div class="detail-value" id="modal-emp-email">-</div>
                 </div>
             </div>
-            
+
             <div class="modal-section">
                 <div class="modal-section-title">Skills</div>
                 <div id="modal-emp-skills"></div>
@@ -72,32 +225,185 @@
             </div>
 
             <div class="modal-section">
-                <div class="modal-section-title">Assigned Projects</div>
-                <ul id="modal-emp-projects" style="padding-left: 1.2rem; color: var(--text-secondary); font-size: 0.9rem;"></ul>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div class="modal-section-title" style="margin-bottom: 0;">Assigned Projects</div>
+                    <button class="btn btn-sm btn-primary" id="detail-assign-btn"
+                        style="font-size: 0.78rem; padding: 0.3rem 0.65rem;">
+                        <span class="material-symbols-rounded" style="font-size: 0.95rem;">assignment</span>
+                        Manage Projects
+                    </button>
+                </div>
+                <ul id="modal-emp-projects"
+                    style="padding-left: 1.2rem; color: var(--text-secondary); font-size: 0.9rem;"></ul>
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                <button class="btn btn-sm btn-danger" id="detail-delete-btn">
+                    <span class="material-symbols-rounded" style="font-size: 0.95rem;">delete</span>
+                    Delete Employee
+                </button>
+                <button class="btn btn-sm btn-secondary" id="detail-close-btn">Close</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener("DOMContentLoaded", async () => {
-        // Load Employees
-        try {
-            const response = await fetch('/api/employees');
-            if (!response.ok) throw new Error('Failed to fetch employees');
-            const data = await response.json();
-            
-            if (data.error) throw new Error(data.error);
+        let employeesCache = [];
+        let systemData = {
+            departments: [],
+            skills: [],
+            certifications: [],
+            projects: []
+        };
+        let currentTargetEmpId = null;
 
+        // Toast Helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            toast.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem; color:${type === 'success' ? 'var(--success)' : 'var(--danger)'}">${icon}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Fetch System Form Metadata (Departments, Skills, Certs, Projects)
+        async function loadSystemMetadata() {
+            try {
+                const [deptRes, skillRes, certRes, projRes] = await Promise.all([
+                    fetch('/api/departments'),
+                    fetch('/api/skills'),
+                    fetch('/api/certifications'),
+                    fetch('/api/projects')
+                ]);
+                if (deptRes.ok) systemData.departments = (await deptRes.json()).departments || [];
+                if (skillRes.ok) systemData.skills = (await skillRes.json()).skills || [];
+                if (certRes.ok) systemData.certifications = (await certRes.json()).certifications || [];
+                if (projRes.ok) systemData.projects = (await projRes.json()).projects || [];
+            } catch (err) {
+                console.error("Failed to load metadata:", err);
+            }
+        }
+
+        await loadSystemMetadata();
+
+        // Populate Add Form Options
+        function populateAddFormOptions() {
+            // Departments
+            const deptSelect = document.getElementById('add-emp-dept');
+            deptSelect.innerHTML = '<option value="">Select a department...</option>';
+            systemData.departments.forEach(dept => {
+                deptSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+            });
+
+            // Projects
+            const projContainer = document.getElementById('add-emp-projects-list');
+            projContainer.innerHTML = '';
+            systemData.projects.forEach(p => {
+                const skillsBadges = p.requiredSkills.map(s => `<span class="badge badge-skill">${s}</span>`).join('');
+                projContainer.innerHTML += `
+                    <label class="project-select-item">
+                        <input type="checkbox" name="add-project" value="${p.name}">
+                        <div class="project-select-info">
+                            <div class="project-select-name">${p.name}</div>
+                            <div class="project-select-desc">${p.description}</div>
+                            <div class="project-select-skills">${skillsBadges}</div>
+                        </div>
+                    </label>
+                `;
+            });
+
+            // Skills
+            const skillContainer = document.getElementById('add-emp-skills-chips');
+            skillContainer.innerHTML = '';
+            systemData.skills.forEach(s => {
+                skillContainer.innerHTML += `
+                    <label class="chip-label">
+                        <input type="checkbox" name="add-skill" value="${s}">
+                        <span>${s}</span>
+                    </label>
+                `;
+            });
+
+            // Certifications
+            const certContainer = document.getElementById('add-emp-certs-chips');
+            certContainer.innerHTML = '';
+            systemData.certifications.forEach(c => {
+                certContainer.innerHTML += `
+                    <label class="chip-label">
+                        <input type="checkbox" name="add-cert" value="${c}">
+                        <span>${c}</span>
+                    </label>
+                `;
+            });
+        }
+
+        populateAddFormOptions();
+
+        // Load & Render Employees Table
+        async function loadEmployees() {
+            try {
+                document.getElementById('employees-loading').style.display = 'block';
+                const response = await fetch('/api/employees');
+                if (!response.ok) throw new Error('Failed to fetch employees');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                employeesCache = data.employees || [];
+                renderEmployeesTable(employeesCache);
+
+                document.getElementById('employees-loading').style.display = 'none';
+                const container = document.getElementById('employees-container');
+                container.style.display = 'block';
+                container.style.opacity = '1';
+                container.style.transform = 'none';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('employees-loading').style.display = 'none';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-banner';
+                errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading employees: ${error.message}</span>`;
+                document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('employees-container'));
+            }
+        }
+
+        function renderEmployeesTable(list) {
             const tbody = document.querySelector('#employees-table tbody');
-            data.employees.forEach((emp, idx) => {
+            tbody.innerHTML = '';
+            document.getElementById('emp-count-badge').innerText = list.length;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-tertiary); padding: 2rem;">No matching employees found.</td></tr>`;
+                return;
+            }
+
+            list.forEach((emp, idx) => {
                 const initials = emp.name.split(' ').map(n => n[0]).join('').substring(0, 2);
                 const colorIdx = idx % 6;
                 const tr = document.createElement('tr');
+
+                // Projects Badges
+                let projectsHTML = '<span style="color:var(--text-tertiary); font-size: 0.85rem;">None</span>';
+                if (emp.projects && emp.projects.length > 0) {
+                    projectsHTML = emp.projects.map(p => `<span class="badge badge-project">${p}</span>`).join('');
+                }
+
                 tr.innerHTML = `
-                    <td><strong style="color: var(--accent-purple);">${emp.empId}</strong></td>
+                    <td><strong style="color: var(--accent-purple); font-size: 0.92rem;">${emp.empId}</strong></td>
                     <td>
                         <div class="emp-name-cell">
                             <div class="emp-avatar" data-color="${colorIdx}">${initials}</div>
@@ -106,50 +412,282 @@
                     </td>
                     <td><span class="badge badge-dept">${emp.department}</span></td>
                     <td><a href="mailto:${emp.email}" style="font-size: 0.88rem;">${emp.email}</a></td>
-                    <td><button class="btn btn-sm btn-secondary view-emp-btn" data-id="${emp.empId}">View Details</button></td>
+                    <td><div style="display: flex; flex-wrap: wrap; gap: 0.2rem;">${projectsHTML}</div></td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <button class="btn btn-sm btn-secondary view-emp-btn" data-id="${emp.empId}" title="View Details">
+                            <span class="material-symbols-rounded" style="font-size:0.95rem;">info</span>
+                            Details
+                        </button>
+                        <button class="btn btn-sm btn-primary assign-proj-btn" data-id="${emp.empId}" title="Assign Projects" style="margin-left: 0.35rem;">
+                            <span class="material-symbols-rounded" style="font-size:0.95rem;">assignment</span>
+                            Assign Projects
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('employees-loading').style.display = 'none';
-            document.getElementById('employees-container').style.display = 'block';
-
-            // Attach event listeners to buttons
+            // Re-bind Action Buttons
             document.querySelectorAll('.view-emp-btn').forEach(btn => {
                 btn.addEventListener('click', () => openEmployeeModal(btn.dataset.id));
             });
 
-        } catch (error) {
-            console.error(error);
-            document.getElementById('employees-loading').style.display = 'none';
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-banner';
-            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading employees: ${error.message}</span>`;
-            document.querySelector('.main-content').insertBefore(errorDiv, document.getElementById('employees-container'));
+            document.querySelectorAll('.assign-proj-btn').forEach(btn => {
+                btn.addEventListener('click', () => openAssignProjectsModal(btn.dataset.id));
+            });
         }
 
-        // Modal Logic
-        const modal = document.getElementById('employee-modal');
-        const closeBtn = document.getElementById('close-modal');
-
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
+        // Live Filter Search
+        const filterInput = document.getElementById('emp-filter-input');
+        filterInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) {
+                renderEmployeesTable(employeesCache);
+                return;
+            }
+            const filtered = employeesCache.filter(emp => {
+                const name = (emp.name || '').toLowerCase();
+                const id = (emp.empId || '').toLowerCase();
+                const dept = (emp.department || '').toLowerCase();
+                const email = (emp.email || '').toLowerCase();
+                const projs = (emp.projects || []).join(' ').toLowerCase();
+                return name.includes(query) || id.includes(query) || dept.includes(query) || email.includes(query) || projs.includes(query);
+            });
+            renderEmployeesTable(filtered);
         });
 
+        // ------------------------------------------------------------
+        // MODAL 1: Add Employee
+        // ------------------------------------------------------------
+        const addModal = document.getElementById('add-employee-modal');
+        const openAddBtn = document.getElementById('open-add-emp-btn');
+        const closeAddBtn = document.getElementById('close-add-modal');
+        const cancelAddBtn = document.getElementById('cancel-add-btn');
+        const addAlert = document.getElementById('add-modal-alert');
+        const fetchNextIdBtn = document.getElementById('btn-fetch-next-id');
+        const addForm = document.getElementById('add-employee-form');
+
+        async function fetchNextId() {
+            try {
+                const res = await fetch('/api/next-emp-id');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('add-emp-id').value = data.nextId;
+                }
+            } catch (e) { console.error('Failed to get next ID', e); }
+        }
+
+        openAddBtn.addEventListener('click', async () => {
+            addAlert.style.display = 'none';
+            addForm.reset();
+            populateAddFormOptions();
+            await fetchNextId();
+            addModal.classList.add('active');
+        });
+
+        closeAddBtn.addEventListener('click', () => addModal.classList.remove('active'));
+        cancelAddBtn.addEventListener('click', () => addModal.classList.remove('active'));
+        fetchNextIdBtn.addEventListener('click', fetchNextId);
+
+        addModal.addEventListener('click', (e) => {
+            if (e.target === addModal) addModal.classList.remove('active');
+        });
+
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            addAlert.style.display = 'none';
+
+            const empId = document.getElementById('add-emp-id').value.trim();
+            const name = document.getElementById('add-emp-name').value.trim();
+            const email = document.getElementById('add-emp-email').value.trim();
+            const department = document.getElementById('add-emp-dept').value;
+
+            const selectedProjects = Array.from(document.querySelectorAll('input[name="add-project"]:checked')).map(el => el.value);
+            const selectedSkills = Array.from(document.querySelectorAll('input[name="add-skill"]:checked')).map(el => el.value);
+            const selectedCerts = Array.from(document.querySelectorAll('input[name="add-cert"]:checked')).map(el => el.value);
+
+            if (!name || !email || !department) {
+                addAlert.innerText = 'Please complete all required fields.';
+                addAlert.style.display = 'flex';
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-add-btn');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin:0 6px 0 0;"></span> Saving...`;
+
+            try {
+                const res = await fetch('/api/employees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        empId,
+                        name,
+                        email,
+                        department,
+                        projects: selectedProjects,
+                        skills: selectedSkills,
+                        certifications: selectedCerts
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok || data.error) throw new Error(data.error || 'Failed to save employee');
+
+                addModal.classList.remove('active');
+                showToast(`Employee ${name} (${empId}) added successfully with ${selectedProjects.length} project(s)!`);
+                await loadEmployees();
+            } catch (err) {
+                console.error(err);
+                addAlert.innerText = err.message;
+                addAlert.style.display = 'flex';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        });
+
+        // ------------------------------------------------------------
+        // MODAL 2: Assign Projects
+        // ------------------------------------------------------------
+        const assignModal = document.getElementById('assign-projects-modal');
+        const closeAssignBtn = document.getElementById('close-assign-modal');
+        const cancelAssignBtn = document.getElementById('cancel-assign-btn');
+        const saveAssignBtn = document.getElementById('save-assign-btn');
+        const assignAlert = document.getElementById('assign-modal-alert');
+
+        closeAssignBtn.addEventListener('click', () => assignModal.classList.remove('active'));
+        cancelAssignBtn.addEventListener('click', () => assignModal.classList.remove('active'));
+        assignModal.addEventListener('click', (e) => {
+            if (e.target === assignModal) assignModal.classList.remove('active');
+        });
+
+        async function openAssignProjectsModal(empId) {
+            currentTargetEmpId = empId;
+            assignAlert.style.display = 'none';
+
+            // Find current employee info from cache or detail API
+            const emp = employeesCache.find(e => e.empId === empId) || { empId, name: empId, projects: [] };
+            document.getElementById('assign-modal-title').innerText = `Assign Projects — ${emp.name}`;
+            document.getElementById('assign-modal-subtitle').innerText = `Manage projects for ${emp.name} (${emp.empId})`;
+
+            // Populate projects list with current assignments pre-checked
+            const listContainer = document.getElementById('assign-projects-list');
+            listContainer.innerHTML = '';
+
+            const currentProjects = emp.projects || [];
+
+            systemData.projects.forEach(p => {
+                const isChecked = currentProjects.includes(p.name);
+                const skillsBadges = p.requiredSkills.map(s => `<span class="badge badge-skill">${s}</span>`).join('');
+                listContainer.innerHTML += `
+                    <label class="project-select-item">
+                        <input type="checkbox" name="assign-project-item" value="${p.name}" ${isChecked ? 'checked' : ''}>
+                        <div class="project-select-info">
+                            <div class="project-select-name">${p.name}</div>
+                            <div class="project-select-desc">${p.description}</div>
+                            <div class="project-select-skills">${skillsBadges}</div>
+                        </div>
+                    </label>
+                `;
+            });
+
+            assignModal.classList.add('active');
+        }
+
+        saveAssignBtn.addEventListener('click', async () => {
+            if (!currentTargetEmpId) return;
+            assignAlert.style.display = 'none';
+
+            const selectedProjects = Array.from(document.querySelectorAll('input[name="assign-project-item"]:checked')).map(el => el.value);
+
+            const originalContent = saveAssignBtn.innerHTML;
+            saveAssignBtn.disabled = true;
+            saveAssignBtn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin:0 6px 0 0;"></span> Saving...`;
+
+            try {
+                const res = await fetch(`/api/employees/${currentTargetEmpId}/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projects: selectedProjects })
+                });
+
+                const data = await res.json();
+                if (!res.ok || data.error) throw new Error(data.error || 'Failed to update projects');
+
+                assignModal.classList.remove('active');
+                showToast(`Project assignments updated for ${currentTargetEmpId}!`);
+
+                // If detail modal is open for this employee, refresh it too
+                const detailModal = document.getElementById('employee-modal');
+                if (detailModal.classList.contains('active') && document.getElementById('modal-emp-id').innerText === currentTargetEmpId) {
+                    openEmployeeModal(currentTargetEmpId);
+                }
+
+                await loadEmployees();
+            } catch (err) {
+                console.error(err);
+                assignAlert.innerText = err.message;
+                assignAlert.style.display = 'flex';
+            } finally {
+                saveAssignBtn.disabled = false;
+                saveAssignBtn.innerHTML = originalContent;
+            }
+        });
+
+        // ------------------------------------------------------------
+        // MODAL 3: Employee Details & Deletion
+        // ------------------------------------------------------------
+        const modal = document.getElementById('employee-modal');
+        const closeBtn = document.getElementById('close-modal');
+        const detailCloseBtn = document.getElementById('detail-close-btn');
+        const detailAssignBtn = document.getElementById('detail-assign-btn');
+        const detailDeleteBtn = document.getElementById('detail-delete-btn');
+
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        detailCloseBtn.addEventListener('click', () => modal.classList.remove('active'));
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.remove('active');
         });
 
+        detailAssignBtn.addEventListener('click', () => {
+            const empId = document.getElementById('modal-emp-id').innerText;
+            if (empId) openAssignProjectsModal(empId);
+        });
+
+        detailDeleteBtn.addEventListener('click', async () => {
+            const empId = document.getElementById('modal-emp-id').innerText;
+            const empName = document.getElementById('modal-emp-name').innerText;
+            if (!empId) return;
+
+            if (!confirm(`Are you sure you want to delete employee "${empName}" (${empId})? This will remove all their semantic triples from the knowledge graph.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/employees/${empId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (!res.ok || data.error) throw new Error(data.error || 'Failed to delete employee');
+
+                modal.classList.remove('active');
+                showToast(`Employee ${empName} (${empId}) deleted successfully.`);
+                await loadEmployees();
+            } catch (err) {
+                alert(`Error deleting employee: ${err.message}`);
+            }
+        });
+
         async function openEmployeeModal(empId) {
+            currentTargetEmpId = empId;
             modal.classList.add('active');
             document.getElementById('modal-body').style.display = 'none';
             document.getElementById('modal-loading').style.display = 'block';
-            
+
             try {
                 const response = await fetch(`/api/employees/${empId}`);
                 if (!response.ok) throw new Error('Failed to fetch employee details');
                 const emp = await response.json();
-                
                 if (emp.error) throw new Error(emp.error);
 
                 document.getElementById('modal-emp-name').innerText = emp.name;
@@ -158,19 +696,19 @@
                 document.getElementById('modal-emp-email').innerHTML = `<a href="mailto:${emp.email}">${emp.email}</a>`;
 
                 const skillsContainer = document.getElementById('modal-emp-skills');
-                skillsContainer.innerHTML = emp.skills.length > 0 
-                    ? emp.skills.map(s => `<span class="badge badge-skill">${s}</span>`).join('') 
+                skillsContainer.innerHTML = emp.skills && emp.skills.length > 0
+                    ? emp.skills.map(s => `<span class="badge badge-skill">${s}</span>`).join('')
                     : '<span style="color:var(--text-tertiary); font-size: 0.88rem;">None</span>';
 
                 const certsContainer = document.getElementById('modal-emp-certs');
-                certsContainer.innerHTML = emp.certifications.length > 0 
-                    ? emp.certifications.map(c => `<span class="badge badge-cert">${c}</span>`).join('') 
+                certsContainer.innerHTML = emp.certifications && emp.certifications.length > 0
+                    ? emp.certifications.map(c => `<span class="badge badge-cert">${c}</span>`).join('')
                     : '<span style="color:var(--text-tertiary); font-size: 0.88rem;">None</span>';
 
                 const projectsContainer = document.getElementById('modal-emp-projects');
-                projectsContainer.innerHTML = emp.projects.length > 0 
-                    ? emp.projects.map(p => `<li>${p}</li>`).join('') 
-                    : '<li style="color:var(--text-tertiary);">None</li>';
+                projectsContainer.innerHTML = emp.projects && emp.projects.length > 0
+                    ? emp.projects.map(p => `<li><strong>${p}</strong></li>`).join('')
+                    : '<li style="color:var(--text-tertiary);">None assigned</li>';
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-body').style.display = 'block';
@@ -181,6 +719,9 @@
                 document.getElementById('modal-body').style.display = 'block';
             }
         }
+
+        // Initial Load
+        loadEmployees();
     });
 </script>
 {% endblock %}

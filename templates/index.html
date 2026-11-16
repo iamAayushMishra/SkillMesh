@@ -77,22 +77,30 @@
                 <a href="/employees" class="see-all">See All</a>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
-                    <span class="material-symbols-rounded" style="color: var(--accent-purple); font-size:1.35rem;">database</span>
+                <div
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded"
+                        style="color: var(--accent-purple); font-size:1.35rem;">database</span>
                     <div>
                         <div style="font-weight: 600; font-size: 0.9rem;">RDF Triple Store</div>
-                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Powered by Apache Jena Fuseki</div>
+                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Powered by Apache Jena Fuseki
+                        </div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
-                    <span class="material-symbols-rounded" style="color: var(--pastel-green-text); font-size:1.35rem;">account_tree</span>
+                <div
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded"
+                        style="color: var(--pastel-green-text); font-size:1.35rem;">account_tree</span>
                     <div>
                         <div style="font-weight: 600; font-size: 0.9rem;">OWL Ontology</div>
-                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Employee, Skill, Project classes</div>
+                        <div style="font-size: 0.78rem; color: var(--text-tertiary);">Employee, Skill, Project classes
+                        </div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
-                    <span class="material-symbols-rounded" style="color: var(--pastel-orange-text); font-size:1.35rem;">query_stats</span>
+                <div
+                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded"
+                        style="color: var(--pastel-orange-text); font-size:1.35rem;">query_stats</span>
                     <div>
                         <div style="font-weight: 600; font-size: 0.9rem;">SPARQL Queries</div>
                         <div style="font-size: 0.78rem; color: var(--text-tertiary);">Semantic search & inference</div>
@@ -120,7 +128,7 @@
             const response = await fetch('/api/dashboard');
             if (!response.ok) throw new Error('Failed to fetch dashboard data');
             const data = await response.json();
-            
+
             if (data.error) throw new Error(data.error);
 
             // Animate counters
@@ -131,9 +139,18 @@
             animateValue('stat-certifications', data.certifications);
 
             document.getElementById('dashboard-loading').style.display = 'none';
-            document.getElementById('dashboard-stats').style.display = 'grid';
-            document.getElementById('action-tiles').style.display = 'grid';
-            document.getElementById('dashboard-bottom').style.display = 'grid';
+            ['dashboard-stats', 'action-tiles', 'dashboard-bottom'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = 'grid';
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.querySelectorAll('.card, .action-tile').forEach(c => {
+                        c.style.opacity = '1';
+                        c.style.transform = 'none';
+                    });
+                }
+            });
 
             // Build overview bars
             buildOverviewBars(data);
@@ -153,7 +170,7 @@
         const duration = 800;
         const start = 0;
         const startTime = performance.now();
-        
+
         function update(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);

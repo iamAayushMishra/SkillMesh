@@ -45,22 +45,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, observerOptions);
 
-    document.querySelectorAll('.card, .project-card, .table-container').forEach(el => {
-        if (!el.closest('.modal-content')) {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(12px)';
-            el.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
-            observer.observe(el);
-        }
-    });
-
-    // ---- Keyboard shortcut: Escape to close modals ----
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-                modal.classList.remove('active');
+            document.querySelectorAll('.card').forEach(el => {
+                if (!el.closest('.modal-content') && !el.closest('[style*="display: none"]')) {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(12px)';
+                    el.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+                    observer.observe(el);
+                }
             });
-        }
-    });
 
-});
+            // ---- Keyboard shortcut: Escape to close modals ----
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                        modal.classList.remove('active');
+                    });
+                }
+            });
+
+        });

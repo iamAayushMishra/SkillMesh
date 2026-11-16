@@ -11,6 +11,7 @@ requests==2.32.3
 
 # RDF Library (local RDF parsing & validation)
 rdflib==7.1.4
+pyparsing>=3.1.0,<3.2.0  # 3.2+ has compatibility issues with rdflib SPARQL parser
 
 # Testing Framework
 pytest==8.3.5
