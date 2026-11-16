@@ -31,6 +31,9 @@
 :SPARQLSkill rdf:type :Skill ;
     :skillName "SPARQL" .
 
+:Kubernetes rdf:type :Skill ;
+    :skillName "Kubernetes" .
+
 # ============================================================
 # SKILL RELATIONSHIPS
 # ============================================================

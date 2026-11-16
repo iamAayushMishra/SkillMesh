@@ -123,7 +123,35 @@
 
             <!-- Technical Skills Section -->
             <div class="modal-section">
-                <div class="modal-section-title">Technical Skills</div>
+                <div class="modal-section-title"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Technical Skills</span>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-add-skill"
+                        style="padding: 0.2rem 0.65rem; font-size: 0.78rem;">
+                        <span class="material-symbols-rounded" style="font-size:0.95rem;">add</span>
+                        Add New Skill
+                    </button>
+                </div>
+
+                <!-- Quick inline add skill input -->
+                <div id="inline-add-skill-box"
+                    style="display: none; margin-bottom: 0.75rem; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px dashed var(--accent-purple);">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="new-skill-input" class="form-control"
+                            placeholder="Enter skill name (e.g. React, Docker, Kubernetes)..."
+                            style="font-size: 0.85rem; padding: 0.4rem 0.75rem;">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-confirm-add-skill"
+                            style="padding: 0.4rem 0.85rem; font-size: 0.82rem; white-space: nowrap;">
+                            <span class="material-symbols-rounded" style="font-size:0.95rem;">check</span>
+                            Add
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-add-skill"
+                            style="padding: 0.4rem 0.65rem; font-size: 0.82rem;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
                 <div id="add-emp-skills-chips" class="chips-container">
                     <!-- Populated dynamically -->
                 </div>
@@ -480,9 +508,84 @@
         openAddBtn.addEventListener('click', async () => {
             addAlert.style.display = 'none';
             addForm.reset();
+            inlineAddSkillBox.style.display = 'none';
+            newSkillInput.value = '';
             populateAddFormOptions();
             await fetchNextId();
             addModal.classList.add('active');
+        });
+
+        // Inline Add New Skill handling inside Add Employee modal
+        const toggleAddSkillBtn = document.getElementById('btn-toggle-add-skill');
+        const inlineAddSkillBox = document.getElementById('inline-add-skill-box');
+        const cancelAddSkillBtn = document.getElementById('btn-cancel-add-skill');
+        const confirmAddSkillBtn = document.getElementById('btn-confirm-add-skill');
+        const newSkillInput = document.getElementById('new-skill-input');
+
+        toggleAddSkillBtn.addEventListener('click', () => {
+            const isHidden = inlineAddSkillBox.style.display === 'none';
+            inlineAddSkillBox.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) newSkillInput.focus();
+        });
+
+        cancelAddSkillBtn.addEventListener('click', () => {
+            inlineAddSkillBox.style.display = 'none';
+            newSkillInput.value = '';
+        });
+
+        async function handleAddNewSkill() {
+            const skillName = newSkillInput.value.trim();
+            if (!skillName) return;
+
+            confirmAddSkillBtn.disabled = true;
+            try {
+                const res = await fetch('/api/skills', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: skillName })
+                });
+                const data = await res.json();
+                if (!res.ok || data.error) throw new Error(data.error || 'Failed to add skill');
+
+                const createdName = (data.skill && data.skill.name) ? data.skill.name : skillName;
+
+                // Add to systemData if not present
+                if (!systemData.skills.includes(createdName)) {
+                    systemData.skills.push(createdName);
+                    systemData.skills.sort();
+                }
+
+                // Check if chip already exists in DOM
+                const existingInput = document.querySelector(`input[name="add-skill"][value="${createdName}"]`);
+                if (existingInput) {
+                    existingInput.checked = true;
+                } else {
+                    const skillContainer = document.getElementById('add-emp-skills-chips');
+                    const label = document.createElement('label');
+                    label.className = 'chip-label';
+                    label.innerHTML = `
+                        <input type="checkbox" name="add-skill" value="${createdName}" checked>
+                        <span>${createdName}</span>
+                    `;
+                    skillContainer.prepend(label);
+                }
+
+                showToast(`Skill "${createdName}" added and selected!`, 'success');
+                newSkillInput.value = '';
+                inlineAddSkillBox.style.display = 'none';
+            } catch (err) {
+                alert(`Error adding skill: ${err.message}`);
+            } finally {
+                confirmAddSkillBtn.disabled = false;
+            }
+        }
+
+        confirmAddSkillBtn.addEventListener('click', handleAddNewSkill);
+        newSkillInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddNewSkill();
+            }
         });
 
         closeAddBtn.addEventListener('click', () => addModal.classList.remove('active'));

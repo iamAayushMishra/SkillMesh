@@ -12,7 +12,8 @@ from sparql_client import (
     add_employee,
     update_employee_projects,
     delete_employee,
-    get_next_employee_id
+    get_next_employee_id,
+    add_skill
 )
 from config import NAMESPACE, SECRET_KEY, DEBUG
 
@@ -439,6 +440,23 @@ def api_skills():
 
     skills = [r["skillName"] for r in results]
     return jsonify({"skills": skills})
+
+
+@app.route("/api/skills", methods=["POST"])
+def api_create_skill():
+    """Create a new skill entity in RDFLib graph and persist to employees.ttl."""
+    data = request.get_json() or {}
+    skill_name = (data.get("name") or data.get("skillName") or "").strip()
+    if not skill_name:
+        return jsonify({"error": "Skill name is required"}), 400
+
+    try:
+        res = add_skill(skill_name)
+        return jsonify({"success": True, "skill": res}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to add skill: {e}"}), 500
 
 
 # ============================================================

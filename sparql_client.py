@@ -237,6 +237,63 @@ def remove_employee_from_ttl(emp_id):
         f.write(content.rstrip() + "\n")
 
 
+def sync_skill_to_ttl(local, skill_name):
+    """Appends a new skill entity block to DATA_PATH."""
+    block = f":{local} rdf:type :Skill ;\n    :skillName \"{skill_name}\" .\n"
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    if f":{local} rdf:type :Skill" in content:
+        return
+
+    marker = "# ============================================================\n# SKILL RELATIONSHIPS"
+    if marker in content:
+        content = content.replace(marker, f"{block}\n{marker}")
+    else:
+        content = content.rstrip() + f"\n\n{block}\n"
+
+    with open(DATA_PATH, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+def _add_skill_unlocked(skill_name):
+    """
+    Creates a new :Skill in the in-memory graph and appends it to DATA_PATH.
+    Returns the created/existing skill dict.
+    """
+    ensure_data_loaded()
+    name_clean = skill_name.strip()
+    if not name_clean:
+        raise ValueError("Skill name cannot be empty.")
+
+    mappings = get_lookup_mappings()
+    if name_clean.lower() in mappings["skills"]:
+        item = mappings["skills"][name_clean.lower()]
+        return {"name": item["name"], "uri": str(item["uri"]), "alreadyExisted": True}
+
+    # Generate a clean URI local name
+    local = re.sub(r'[^A-Za-z0-9_]', '', name_clean.title().replace(' ', ''))
+    if not local or local[0].isdigit():
+        local = f"Skill_{local}" if local else f"Skill_{abs(hash(name_clean)) % 100000}"
+
+    base_local = local
+    counter = 1
+    while EX[local] in kg.subjects() or EX[local] in kg.objects():
+        local = f"{base_local}_{counter}"
+        counter += 1
+
+    skill_uri = EX[local]
+
+    # Add to in-memory graph
+    kg.add((skill_uri, RDF.type, EX.Skill))
+    kg.add((skill_uri, EX.skillName, Literal(name_clean)))
+
+    # Persist to employees.ttl
+    sync_skill_to_ttl(local, name_clean)
+
+    return {"name": name_clean, "uri": str(skill_uri), "alreadyExisted": False}
+
+
 def _add_employee_unlocked(emp_id, name, email, department, skills=None, certifications=None, projects=None):
     """
     Adds a new employee to the in-memory RDFLib graph and updates DATA_PATH.
@@ -259,13 +316,21 @@ def _add_employee_unlocked(emp_id, name, email, department, skills=None, certifi
     kg.add((emp_uri, EX.email, Literal(email)))
     kg.add((emp_uri, EX.worksIn, dept_item["uri"]))
 
-    # Add skills
+    # Add skills (creates new skill entity if it doesn't exist)
     added_skills = []
     if skills:
         for s in skills:
             s_clean = s.strip()
+            if not s_clean:
+                continue
             item = mappings["skills"].get(s_clean.lower())
-            if item:
+            if not item:
+                new_skill = _add_skill_unlocked(s_clean)
+                skill_uri = URIRef(new_skill["uri"])
+                kg.add((emp_uri, EX.hasSkill, skill_uri))
+                added_skills.append(new_skill["name"])
+                mappings = get_lookup_mappings()
+            else:
                 kg.add((emp_uri, EX.hasSkill, item["uri"]))
                 added_skills.append(item["name"])
 
@@ -364,3 +429,8 @@ def update_employee_projects(*args, **kwargs):
 def delete_employee(*args, **kwargs):
     with _kg_lock:
         return _delete_employee_unlocked(*args, **kwargs)
+
+
+def add_skill(*args, **kwargs):
+    with _kg_lock:
+        return _add_skill_unlocked(*args, **kwargs)

@@ -41,9 +41,9 @@ def test_data_employees_count(data_graph):
     assert len(employees) >= 15, f"Expected at least 15 employees, found {len(employees)}"
 
 def test_data_skills_count(data_graph):
-    """Test that we have exactly 8 skills loaded."""
+    """Test that we have at least 8 skills loaded."""
     skills = list(data_graph.subjects(RDF.type, EMP.Skill))
-    assert len(skills) == 8, f"Expected 8 skills, found {len(skills)}"
+    assert len(skills) >= 8, f"Expected at least 8 skills, found {len(skills)}"
 
 def test_specific_employee_data(data_graph):
     """Test that a specific employee (EMP001) has correct properties."""
