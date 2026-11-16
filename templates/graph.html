@@ -4,201 +4,1184 @@
 
 {% block content %}
 <div class="fade-in" style="display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 600px;">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-row">
-            <div>
-                <h1>Interactive Knowledge Graph</h1>
-                <p class="page-subtitle">Visualize relationships between Employees, Skills, Departments, and Projects.</p>
+    <div class="fade-in">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-row">
+                <div class="page-header-row"
+                    style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <h1>Interactive Knowledge Graph</h1>
+                        <p class="page-subtitle">Visualize relationships between Employees, Skills, Departments, and
+                            Projects.</p>
+                        <p class="page-subtitle">Semantic ontology network linking Employees, Skills, Departments,
+                            Projects, and Certifications.</p>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-reset">
+                        <span class="material-symbols-rounded" style="font-size:1rem;">center_focus_strong</span>
+                        Reset View
+                    </button>
+                    <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-sm" id="btn-export-png"
+                            title="Download High-Resolution PNG">
+                            <span class="material-symbols-rounded" style="font-size:1rem;">photo_camera</span>
+                            Export Image
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="btn-reset" title="Fit & Reset Graph">
+                            <span class="material-symbols-rounded" style="font-size:1rem;">center_focus_strong</span>
+                            Reset View
+                        </button>
+                    </div>
+                </div>
             </div>
-            <button class="btn btn-secondary" id="btn-reset">
-                <span class="material-symbols-rounded" style="font-size:1rem;">center_focus_strong</span>
-                Reset View
-            </button>
-        </div>
-    </div>
 
-    <div id="graph-loading" class="spinner"></div>
-    <div id="graph-error" class="error-banner" style="display: none;"></div>
+            <!-- Loading & Error States -->
+            <div id="graph-loading" class="spinner"></div>
+            <div id="graph-error" class="error-banner" style="display: none;"></div>
 
-    <div id="cy-container" style="flex: 1; display: none;">
-        <div class="graph-controls">
-            <h4 style="margin-bottom: 0.65rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary);">Legend</h4>
-            <div class="graph-legend-item">
-                <div class="graph-legend-dot" style="background-color: #818cf8;"></div> Employee
-            </div>
-            <div class="graph-legend-item">
-                <div class="graph-legend-dot" style="background-color: #34d399;"></div> Skill
-            </div>
-            <div class="graph-legend-item">
-                <div class="graph-legend-dot" style="background-color: #fbbf24;"></div> Department
-            </div>
-            <div class="graph-legend-item">
-                <div class="graph-legend-dot" style="background-color: #f87171;"></div> Project
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+            <div id="cy-container" style="flex: 1; display: none;">
+                <div class="graph-controls">
+                    <h4
+                        style="margin-bottom: 0.65rem; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary);">
+                        Legend</h4>
+                    <div class="graph-legend-item">
+                        <div class="graph-legend-dot" style="background-color: #818cf8;"></div> Employee
+                        <!-- Graph Container with Toolbar -->
+                        <div class="graph-wrapper" id="graph-wrapper" style="display: none;">
+                            <!-- Top Toolbar -->
+                            <div class="graph-toolbar">
+                                <!-- Search & Autocomplete -->
+                                <div class="graph-toolbar-group">
+                                    <div class="graph-search-box">
+                                        <span class="material-symbols-rounded search-icon">search</span>
+                                        <input type="text" id="graph-search-input" placeholder="Search node in graph..."
+                                            autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="graph-legend-item">
+                                    <div class="graph-legend-dot" style="background-color: #34d399;"></div> Skill
 
-{% block scripts %}
-<script>
-    document.addEventListener("DOMContentLoaded", async () => {
-        try {
-            const response = await fetch('/api/graph');
-            if (!response.ok) throw new Error('Failed to fetch graph data');
-            const data = await response.json();
-            
-            if (data.error) throw new Error(data.error);
+                                    <!-- Type Filter Chips -->
+                                    <div class="graph-toolbar-group" id="filter-chips-group">
+                                        <span
+                                            style="font-size: 0.75rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; margin-right: 2px;">Filter:</span>
+                                        <div class="type-filter-chip active" data-type="Employee">
+                                            <span class="chip-dot" style="background:#818cf8;"></span>
+                                            <span>Employees</span>
+                                            <span id="chip-count-Employee"
+                                                style="opacity:0.75; font-size:0.7rem;">(0)</span>
+                                        </div>
+                                        <div class="type-filter-chip active" data-type="Skill">
+                                            <span class="chip-dot" style="background:#34d399;"></span>
+                                            <span>Skills</span>
+                                            <span id="chip-count-Skill"
+                                                style="opacity:0.75; font-size:0.7rem;">(0)</span>
+                                        </div>
+                                        <div class="type-filter-chip active" data-type="Department">
+                                            <span class="chip-dot" style="background:#fbbf24;"></span>
+                                            <span>Departments</span>
+                                            <span id="chip-count-Department"
+                                                style="opacity:0.75; font-size:0.7rem;">(0)</span>
+                                        </div>
+                                        <div class="type-filter-chip active" data-type="Project">
+                                            <span class="chip-dot" style="background:#f87171;"></span>
+                                            <span>Projects</span>
+                                            <span id="chip-count-Project"
+                                                style="opacity:0.75; font-size:0.7rem;">(0)</span>
+                                        </div>
+                                        <div class="type-filter-chip active" data-type="Certification">
+                                            <span class="chip-dot" style="background:#c084fc;"></span>
+                                            <span>Certs</span>
+                                            <span id="chip-count-Certification"
+                                                style="opacity:0.75; font-size:0.7rem;">(0)</span>
+                                        </div>
+                                    </div>
+                                    <div class="graph-legend-item">
+                                        <div class="graph-legend-dot" style="background-color: #fbbf24;"></div>
+                                        Department
 
-            document.getElementById('graph-loading').style.display = 'none';
-            document.getElementById('cy-container').style.display = 'block';
+                                        <!-- Layout & Display Controls -->
+                                        <div class="graph-toolbar-group">
+                                            <select id="layout-select" class="graph-select" title="Change Graph Layout">
+                                                <option value="cose" selected>Layout: COSE (Physics)</option>
+                                                <option value="concentric">Layout: Concentric (Rings)</option>
+                                                <option value="breadthfirst">Layout: Hierarchy (Tree)</option>
+                                                <option value="circle">Layout: Circle</option>
+                                                <option value="grid">Layout: Grid</option>
+                                            </select>
 
-            initGraph(data.nodes, data.edges);
+                                            <button class="graph-btn-icon" id="btn-zoom-in" title="Zoom In">
+                                                <span class="material-symbols-rounded"
+                                                    style="font-size:1.15rem;">zoom_in</span>
+                                            </button>
+                                            <button class="graph-btn-icon" id="btn-zoom-out" title="Zoom Out">
+                                                <span class="material-symbols-rounded"
+                                                    style="font-size:1.15rem;">zoom_out</span>
+                                            </button>
+                                            <button class="graph-btn-icon" id="btn-toggle-labels"
+                                                title="Toggle Edge Relationship Labels">
+                                                <span class="material-symbols-rounded"
+                                                    style="font-size:1.15rem;">label</span>
+                                            </button>
+                                        </div>
+                                        <div class="graph-legend-item">
+                                            <div class="graph-legend-dot" style="background-color: #f87171;"></div>
+                                            Project
+                                        </div>
 
-        } catch (error) {
-            console.error(error);
-            document.getElementById('graph-loading').style.display = 'none';
-            const errorDiv = document.getElementById('graph-error');
-            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading graph: ${error.message}</span>`;
-            errorDiv.style.display = 'flex';
-        }
-    });
+                                        <!-- Cytoscape Canvas Container -->
+                                        <div id="cy-container">
+                                            <!-- Floating Node Inspector Side Drawer -->
+                                            <div class="graph-inspector" id="graph-inspector">
+                                                <div class="inspector-header">
+                                                    <div>
+                                                        <div class="inspector-title" id="inspector-name">Node Details
+                                                        </div>
+                                                        <div style="font-size: 0.75rem; color: var(--text-tertiary);"
+                                                            id="inspector-uri">-</div>
+                                                    </div>
+                                                    <button class="inspector-close-btn" id="inspector-close"
+                                                        title="Close details">&times;</button>
+                                                </div>
 
-    function initGraph(nodesData, edgesData) {
-        const elements = [];
+                                                <div class="inspector-meta">
+                                                    <span id="inspector-badge" class="badge badge-dept">Type</span>
+                                                    <span id="inspector-degree"
+                                                        style="font-size: 0.78rem; font-weight: 700; color: var(--accent-purple);">0
+                                                        connections</span>
+                                                </div>
 
-        // Prepare nodes
-        nodesData.forEach(n => {
-            elements.push({
-                data: { 
-                    id: n.id, 
-                    label: n.label,
-                    type: n.type
-                }
-            });
-        });
+                                                <div id="inspector-details-body">
+                                                    <!-- Populated dynamically on node click -->
+                                                </div>
+
+                                                <div class="inspector-actions">
+                                                    <button class="btn btn-secondary btn-sm" id="btn-focus-node"
+                                                        style="flex:1;">
+                                                        <span class="material-symbols-rounded"
+                                                            style="font-size:0.95rem;">my_location</span>
+                                                        Focus
+                                                    </button>
+                                                    <button class="btn btn-primary btn-sm" id="btn-isolate-neighborhood"
+                                                        style="flex:1;">
+                                                        <span class="material-symbols-rounded"
+                                                            style="font-size:0.95rem;">hub</span>
+                                                        Isolate
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Legend Overlay -->
+                                            <div class="graph-controls">
+                                                <span
+                                                    style="font-size: 0.72rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Legend:</span>
+                                                <div class="graph-legend-item">
+                                                    <div class="graph-legend-dot" style="background-color: #818cf8;">
+                                                    </div> Employee
+                                                </div>
+                                                <div class="graph-legend-item">
+                                                    <div class="graph-legend-dot" style="background-color: #34d399;">
+                                                    </div> Skill
+                                                </div>
+                                                <div class="graph-legend-item">
+                                                    <div class="graph-legend-dot" style="background-color: #fbbf24;">
+                                                    </div> Department
+                                                </div>
+                                                <div class="graph-legend-item">
+                                                    <div class="graph-legend-dot" style="background-color: #f87171;">
+                                                    </div> Project
+                                                </div>
+                                                <div class="graph-legend-item">
+                                                    <div class="graph-legend-dot" style="background-color: #c084fc;">
+                                                    </div> Certification
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ============================================================ -->
+                                    <!-- GRAPH STATS & ANALYTICS SECTION (BELOW GRAPH)                -->
+                                    <!-- ============================================================ -->
+                                    <div id="graph-stats-container" style="display: none;">
+                                        <div class="graph-analytics-header">
+                                            <div>
+                                                <h2 style="font-size: 1.35rem; margin-bottom: 0.2rem;">Knowledge Graph
+                                                    Metrics & Topology</h2>
+                                                <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">
+                                                    In-depth structural analytics derived from RDF triples and
+                                                    ontological relations.</p>
+                                            </div>
+                                            <span class="badge badge-dept"
+                                                style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                                                <span class="material-symbols-rounded"
+                                                    style="font-size:0.9rem; vertical-align: middle;">account_tree</span>
+                                                Full Organization Mesh
+                                            </span>
+                                        </div>
+
+                                        <!-- 4 Top KPI Cards -->
+                                        <div class="graph-kpi-grid">
+                                            <div class="graph-kpi-card">
+                                                <div class="graph-kpi-info">
+                                                    <span class="graph-kpi-label">Total Entities</span>
+                                                    <span class="graph-kpi-value" id="kpi-total-nodes">0</span>
+                                                    <span class="graph-kpi-sub">Nodes in graph</span>
+                                                </div>
+                                                <div class="graph-kpi-icon"
+                                                    style="background: var(--pastel-blue); color: var(--pastel-blue-text);">
+                                                    👥
+                                                </div>
+                                            </div>
+
+                                            <div class="graph-kpi-card">
+                                                <div class="graph-kpi-info">
+                                                    <span class="graph-kpi-label">Total Relations</span>
+                                                    <span class="graph-kpi-value" id="kpi-total-edges">0</span>
+                                                    <span class="graph-kpi-sub">RDF predicate triples</span>
+                                                </div>
+                                                <div class="graph-kpi-icon"
+                                                    style="background: var(--pastel-green); color: var(--pastel-green-text);">
+                                                    🔗
+                                                </div>
+                                            </div>
+
+                                            <div class="graph-kpi-card">
+                                                <div class="graph-kpi-info">
+                                                    <span class="graph-kpi-label">Network Density</span>
+                                                    <span class="graph-kpi-value" id="kpi-density">0%</span>
+                                                    <span class="graph-kpi-sub">Edge / potential ratio</span>
+                                                </div>
+                                                <div class="graph-kpi-icon"
+                                                    style="background: var(--pastel-orange); color: var(--pastel-orange-text);">
+                                                    🕸️
+                                                </div>
+                                            </div>
+
+                                            <div class="graph-kpi-card">
+                                                <div class="graph-kpi-info">
+                                                    <span class="graph-kpi-label">Top Central Hub</span>
+                                                    <span class="graph-kpi-value" id="kpi-hub-name"
+                                                        style="font-size: 1.3rem; margin-top: 0.2rem;">-</span>
+                                                    <span class="graph-kpi-sub" id="kpi-hub-degree">0 connections</span>
+                                                </div>
+                                                <div class="graph-kpi-icon"
+                                                    style="background: var(--pastel-violet); color: var(--pastel-violet-text);">
+                                                    ⭐
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Detailed Analytics 4-Card Grid -->
+                                        <div class="graph-details-grid">
+                                            <!-- 1. Top Connected Hubs -->
+                                            <div class="card">
+                                                <div class="graph-card-header">
+                                                    <h3>
+                                                        <span class="material-symbols-rounded"
+                                                            style="color: var(--accent-purple); font-size:1.25rem;">leaderboard</span>
+                                                        Top 5 Most Connected Hubs
+                                                    </h3>
+                                                    <span style="font-size: 0.75rem; color: var(--text-tertiary);">By
+                                                        degree centrality</span>
+                                                </div>
+                                                <div id="hubs-ranked-list"
+                                                    style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                                    <!-- Populated dynamically -->
+                                                </div>
+                                            </div>
+
+                                            <!-- 2. Entity Type Distribution -->
+                                            <div class="card">
+                                                <div class="graph-card-header">
+                                                    <h3>
+                                                        <span class="material-symbols-rounded"
+                                                            style="color: var(--pastel-green-text); font-size:1.25rem;">donut_large</span>
+                                                        Entity Type Breakdown
+                                                    </h3>
+                                                    <span style="font-size: 0.75rem; color: var(--text-tertiary);"
+                                                        id="entity-breakdown-total">36 Nodes</span>
+                                                </div>
+                                                <div id="entity-distribution-list"
+                                                    style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                                    <!-- Populated dynamically -->
+                                                </div>
+                                            </div>
+
+                                            <!-- 3. Relationship Breakdown -->
+                                            <div class="card">
+                                                <div class="graph-card-header">
+                                                    <h3>
+                                                        <span class="material-symbols-rounded"
+                                                            style="color: var(--pastel-orange-text); font-size:1.25rem;">share</span>
+                                                        Relationship Distribution
+                                                    </h3>
+                                                    <span style="font-size: 0.75rem; color: var(--text-tertiary);"
+                                                        id="rel-breakdown-total">119 Edges</span>
+                                                </div>
+                                                <div id="rel-distribution-list"
+                                                    style="display: flex; flex-direction: column; gap: 0.65rem;">
+                                                    <!-- Populated dynamically -->
+                                                </div>
+                                            </div>
+
+                                            <!-- 4. Key Semantic Insights -->
+                                            <div class="card">
+                                                <div class="graph-card-header">
+                                                    <h3>
+                                                        <span class="material-symbols-rounded"
+                                                            style="color: #e11d48; font-size:1.25rem;">insights</span>
+                                                        Key Graph Insights
+                                                    </h3>
+                                                    <span
+                                                        style="font-size: 0.75rem; color: var(--text-tertiary);">Semantic
+                                                        inference</span>
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 0.85rem;"
+                                                    id="semantic-insights-list">
+                                                    <!-- Populated dynamically -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endblock %}
+
+                                {% block scripts %}
+                                <script>
+                                    document.addEventListener("DOMContentLoaded", async () => {
+                                        let cyInstance = null;
+                                        let rawNodes = [];
+                                        let rawEdges = [];
+                                        let activeFilters = new Set(['Employee', 'Skill', 'Department', 'Project', 'Certification']);
+                                        let edgeLabelsVisible = true;
+                                        let selectedNode = null;
+
+                                        const colors = {
+                                            'Employee': '#818cf8',
+                                            'Skill': '#34d399',
+                                            'Department': '#fbbf24',
+                                            'Project': '#f87171',
+                                            'Certification': '#c084fc'
+                                        };
+
+                                        try {
+                                            const response = await fetch('/api/graph');
+                                            if (!response.ok) throw new Error('Failed to fetch graph data');
+                                            const data = await response.json();
+
+                                            if (data.error) throw new Error(data.error);
+
+                                            rawNodes = data.nodes || [];
+                                            rawEdges = data.edges || [];
+
+                                            document.getElementById('graph-loading').style.display = 'none';
+                                            document.getElementById('cy-container').style.display = 'block';
+                                            const wrapper = document.getElementById('graph-wrapper');
+                                            wrapper.style.display = 'flex';
+                                            wrapper.style.opacity = '1';
+                                            wrapper.style.transform = 'none';
+
+                                            initGraph(data.nodes, data.edges);
+                                            const statsContainer = document.getElementById('graph-stats-container');
+                                            statsContainer.style.display = 'block';
+                                            statsContainer.style.opacity = '1';
+                                            statsContainer.style.transform = 'none';
+
+                                            initGraph(rawNodes, rawEdges);
+                                            updateFilterCounts(rawNodes);
+                                            renderGraphStatistics(rawNodes, rawEdges);
+
+                                        } catch (error) {
+                                            console.error(error);
+                                            document.getElementById('graph-loading').style.display = 'none';
+                                            const errorDiv = document.getElementById('graph-error');
+                                            errorDiv.innerHTML = `<span class="material-symbols-rounded" style="font-size:1.15rem;">warning</span><span>Error loading graph: ${error.message}</span>`;
+                                            errorDiv.style.display = 'flex';
+                                        }
+                                    });
+
+                                    function initGraph(nodesData, edgesData) {
+                                        const elements = [];
+                                        // ============================================================
+                                        // CYTOSCAPE INITIALIZATION
+                                        // ============================================================
+                                        function initGraph(nodesData, edgesData) {
+                                            const elements = buildElements(nodesData, edgesData);
+
+                                            // Prepare nodes
+                                            nodesData.forEach(n => {
+                                                elements.push({
+                                                    data: {
+                                                        id: n.id,
+                                                        label: n.label,
+                                                        type: n.type
+            cyInstance = cytoscape({
+                                                            container: document.getElementById('cy-container'),
+                                                            elements: elements,
+                                                            style: [
+                                                                {
+                                                                    selector: 'node',
+                                                                    style: {
+                                                                        'label': 'data(label)',
+                                                                        'text-valign': 'bottom',
+                                                                        'text-halign': 'center',
+                                                                        'text-margin-y': 6,
+                                                                        'background-color': function (ele) {
+                                                                            return colors[ele.data('type')] || '#94a3b8';
+                                                                        },
+                                                                        'font-size': '11px',
+                                                                        'font-family': 'Inter, sans-serif',
+                                                                        'font-weight': '600',
+                                                                        'color': '#334155',
+                                                                        'text-outline-color': '#ffffff',
+                                                                        'text-outline-width': 2.5,
+                                                                        'width': function (ele) {
+                                                                            switch (ele.data('type')) {
+                                                                                case 'Employee': return 36;
+                                                                                case 'Department': return 32;
+                                                                                case 'Project': return 32;
+                                                                                case 'Skill': return 26;
+                                                                                default: return 26;
+                                                                            }
+                                                                        },
+                                                                        'height': function (ele) {
+                                                                            switch (ele.data('type')) {
+                                                                                case 'Employee': return 36;
+                                                                                case 'Department': return 32;
+                                                                                case 'Project': return 32;
+                                                                                case 'Skill': return 26;
+                                                                                default: return 26;
+                                                                            }
+                                                                        },
+                                                                        'border-width': 2.5,
+                                                                        'border-color': '#ffffff',
+                                                                        'shadow-blur': 10,
+                                                                        'shadow-color': 'rgba(0,0,0,0.08)',
+                                                                        'shadow-offset-y': 2,
+                                                                        'transition-property': 'background-color, border-color, width, height, opacity',
+                                                                        'transition-duration': '0.2s'
+                                                                    }
+                                                                },
+                                                                {
+                                                                    selector: 'edge',
+                                                                    style: {
+                                                                        'label': edgeLabelsVisible ? 'data(label)' : '',
+                                                                        'font-size': '8.5px',
+                                                                        'font-family': 'Inter, sans-serif',
+                                                                        'color': '#94a3b8',
+                                                                        'text-rotation': 'autorotate',
+                                                                        'text-margin-y': -7,
+                                                                        'text-background-opacity': 0.8,
+                                                                        'text-background-color': '#ffffff',
+                                                                        'text-background-padding': 2,
+                                                                        'text-background-shape': 'roundrectangle',
+                                                                        'width': 1.6,
+                                                                        'line-color': '#cbd5e1',
+                                                                        'target-arrow-color': '#cbd5e1',
+                                                                        'target-arrow-shape': 'triangle',
+                                                                        'curve-style': 'bezier',
+                                                                        'opacity': 0.65,
+                                                                        'arrow-scale': 0.85,
+                                                                        'transition-property': 'line-color, target-arrow-color, width, opacity',
+                                                                        'transition-duration': '0.2s'
+                                                                    }
+                                                                },
+                                                                {
+                                                                    selector: ':selected',
+                                                                    style: {
+                                                                        'border-width': 4.5,
+                                                                        'border-color': '#4f46e5',
+                                                                        'line-color': '#4f46e5',
+                                                                        'target-arrow-color': '#4f46e5',
+                                                                        'opacity': 1,
+                                                                        'width': 42,
+                                                                        'height': 42
+                                                                    }
+                                                                },
+                                                                {
+                                                                    selector: '.faded',
+                                                                    style: {
+                                                                        'opacity': 0.12
+                                                                    }
+                                                                },
+                                                                {
+                                                                    selector: '.highlighted',
+                                                                    style: {
+                                                                        'opacity': 1,
+                                                                        'line-color': '#6366f1',
+                                                                        'target-arrow-color': '#6366f1',
+                                                                        'width': 2.5
+                                                                    }
+                                                                }
+                                                            ],
+                                                            layout: getLayoutConfig(document.getElementById('layout-select').value)
+                                                        });
+
+                                                        // Hover interactions
+                                                        cyInstance.on('mouseover', 'node', () => { document.body.style.cursor = 'pointer'; });
+                                                        cyInstance.on('mouseout', 'node', () => { document.body.style.cursor = 'default'; });
+
+                                                        // Click node -> inspect & highlight neighborhood
+                                                        cyInstance.on('tap', 'node', function (e) {
+                                                            const node = e.target;
+                                                            selectAndInspectNode(node);
+                                                        });
+
+                                                        // Click canvas background -> reset highlight & close inspector
+                                                        cyInstance.on('tap', function (e) {
+                                                            if (e.target === cyInstance) {
+                                                                resetHighlights();
+                                                                document.getElementById('graph-inspector').style.display = 'none';
+                                                                selectedNode = null;
+                                                            }
+                                                        });
+                                                    });
+                                            }
 
         // Prepare edges
         edgesData.forEach((e, i) => {
-            elements.push({
-                data: {
-                    id: 'edge' + i,
-                    source: e.source,
-                    target: e.target,
-                    label: e.relationship
-                }
-            });
-        });
+                                                elements.push({
+                                                    data: {
+                                                        id: 'edge' + i,
+                                                        source: e.source,
+                                                        target: e.target,
+                                                        label: e.relationship
+        function buildElements(nodesData, edgesData) {
+                                                    const elements = [];
+                                                    const includedNodeIds = new Set();
 
-        // Color palette — softer modern tones
-        const colors = {
-            'Employee': '#818cf8',
-            'Skill': '#34d399',
-            'Department': '#fbbf24',
-            'Project': '#f87171',
-            'Certification': '#c084fc'
-        };
+                                                    nodesData.forEach(n => {
+                                                        if (activeFilters.has(n.type)) {
+                                                            elements.push({
+                                                                data: {
+                                                                    id: n.id,
+                                                                    label: n.label,
+                                                                    type: n.type
+                                                                }
+                                                            });
+                                                            includedNodeIds.add(n.id);
+                                                        }
+                                                    });
+                                                });
 
-        const cy = cytoscape({
-            container: document.getElementById('cy-container'),
-            elements: elements,
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'label': 'data(label)',
-                        'text-valign': 'bottom',
-                        'text-halign': 'center',
-                        'text-margin-y': 6,
-                        'background-color': function(ele) {
-                            return colors[ele.data('type')] || '#94a3b8';
-                        },
-                        'font-size': '11px',
-                        'font-family': 'Inter, sans-serif',
-                        'font-weight': '500',
-                        'color': '#374151',
-                        'text-outline-color': '#ffffff',
-                        'text-outline-width': 2.5,
-                        'width': function(ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
-                        'height': function(ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
-                        'border-width': 2,
-                        'border-color': '#ffffff',
-                        'shadow-blur': 8,
-                        'shadow-color': 'rgba(0,0,0,0.08)',
-                        'shadow-offset-x': 0,
-                        'shadow-offset-y': 2
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'label': 'data(label)',
-                        'font-size': '9px',
-                        'color': '#9ca3af',
-                        'text-rotation': 'autorotate',
-                        'text-margin-y': -8,
-                        'width': 1.5,
-                        'line-color': '#d1d5db',
-                        'target-arrow-color': '#d1d5db',
-                        'target-arrow-shape': 'triangle',
-                        'curve-style': 'bezier',
-                        'opacity': 0.65
-                    }
-                },
-                {
-                    selector: ':selected',
-                    style: {
-                        'border-width': 4,
-                        'border-color': '#6366f1',
-                        'line-color': '#6366f1',
-                        'target-arrow-color': '#6366f1',
-                        'opacity': 1
-                    }
-                }
+                                                // Color palette — softer modern tones
+                                                const colors = {
+                                                    'Employee': '#818cf8',
+                                                    'Skill': '#34d399',
+                                                    'Department': '#fbbf24',
+                                                    'Project': '#f87171',
+                                                    'Certification': '#c084fc'
+                                                };
+                                                edgesData.forEach((e, i) => {
+                                                    if (includedNodeIds.has(e.source) && includedNodeIds.has(e.target)) {
+                                                        elements.push({
+                                                            data: {
+                                                                id: 'edge_' + i,
+                                                                source: e.source,
+                                                                target: e.target,
+                                                                label: e.relationship
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                const cy = cytoscape({
+                                                    container: document.getElementById('cy-container'),
+                                                    elements: elements,
+                                                    style: [
+                                                        {
+                                                            selector: 'node',
+                                                            style: {
+                                                                'label': 'data(label)',
+                                                                'text-valign': 'bottom',
+                                                                'text-halign': 'center',
+                                                                'text-margin-y': 6,
+                                                                'background-color': function (ele) {
+                                                                    return colors[ele.data('type')] || '#94a3b8';
+                                                                    return elements;
+                                                                }
+
+        function getLayoutConfig(layoutName) {
+                                                            switch(layoutName) {
+                case 'cose':
+                                                            return {
+                                                                name: 'cose',
+                                                                idealEdgeLength: 105,
+                                                                nodeOverlap: 20,
+                                                                refresh: 20,
+                                                                fit: true,
+                                                                padding: 35,
+                                                                randomize: false,
+                                                                componentSpacing: 110,
+                                                                nodeRepulsion: 450000,
+                                                                edgeElasticity: 100,
+                                                                nestingFactor: 5,
+                                                                animate: true,
+                                                                animationDuration: 500
+                                                            };
+                                                            case 'concentric':
+                                                            return {
+                                                                name: 'concentric',
+                                                                fit: true,
+                                                                padding: 30,
+                                                                concentric: function (node) {
+                                                                    return node.degree();
+                                                                },
+                                                                'font-size': '11px',
+                                                                'font-family': 'Inter, sans-serif',
+                                                                'font-weight': '500',
+                                                                'color': '#374151',
+                                                                'text-outline-color': '#ffffff',
+                                                                'text-outline-width': 2.5,
+                                                                'width': function (ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
+                                                                'height': function (ele) { return ele.data('type') === 'Employee' ? 38 : 28; },
+                                                                'border-width': 2,
+                                                                'border-color': '#ffffff',
+                                                                'shadow-blur': 8,
+                                                                'shadow-color': 'rgba(0,0,0,0.08)',
+                                                                'shadow-offset-x': 0,
+                                                                'shadow-offset-y': 2
+                                                            }
+                                                        },
+                                                        {
+                                                            selector: 'edge',
+                                                            style: {
+                                                                'label': 'data(label)',
+                                                                'font-size': '9px',
+                                                                'color': '#9ca3af',
+                                                                'text-rotation': 'autorotate',
+                                                                'text-margin-y': -8,
+                                                                'width': 1.5,
+                                                                'line-color': '#d1d5db',
+                                                                'target-arrow-color': '#d1d5db',
+                                                                'target-arrow-shape': 'triangle',
+                                                                'curve-style': 'bezier',
+                                                                'opacity': 0.65
+                                                            }
+                                                        },
+                                                        {
+                                                            selector: ':selected',
+                                                            style: {
+                                                                'border-width': 4,
+                                                                'border-color': '#6366f1',
+                                                                'line-color': '#6366f1',
+                                                                'target-arrow-color': '#6366f1',
+                                                                'opacity': 1
+                                                            }
+                        levelWidth: function (nodes) {
+                                                                return 3;
+                                                            },
+                                                            animate: true,
+                                                            animationDuration: 500
+                                                        };
+                                                    case 'breadthfirst':
+                                                    return {
+                                                        name: 'breadthfirst',
+                                                        directed: true,
+                                                        fit: true,
+                                                        padding: 30,
+                                                        spacingFactor: 1.25,
+                                                        animate: true,
+                                                        animationDuration: 500
+                                                    };
+                                                    case 'circle':
+                                                    return {
+                                                        name: 'circle',
+                                                        fit: true,
+                                                        padding: 35,
+                                                        animate: true,
+                                                        animationDuration: 500
+                                                    };
+                                                    case 'grid':
+                                                    return {
+                                                        name: 'grid',
+                                                        fit: true,
+                                                        padding: 30,
+                                                        animate: true,
+                                                        animationDuration: 500
+                                                    };
+                                                    default:
+                    return { name: 'cose', fit: true, padding: 30 };
+                                                }
+        }
+
+        // ============================================================
+        // NODE INSPECTOR & NEIGHBORHOOD HIGHLIGHT
+        // ============================================================
+        function selectAndInspectNode(node) {
+                                                    selectedNode = node;
+                                                    const neighborhood = node.neighborhood().add(node);
+
+                                                    cyInstance.elements().removeClass('highlighted').addClass('faded');
+                                                    neighborhood.removeClass('faded').addClass('highlighted');
+
+                                                    const data = node.data();
+                                                    const inspector = document.getElementById('graph-inspector');
+                                                    document.getElementById('inspector-name').innerText = data.label;
+                                                    document.getElementById('inspector-uri').innerText = data.id.replace('http://example.org/employee#', ':');
+
+                                                    const badge = document.getElementById('inspector-badge');
+                                                    badge.innerText = data.type;
+                                                    badge.style.backgroundColor = colors[data.type] || '#818cf8';
+                                                    badge.style.color = '#fff';
+
+                                                    const degree = node.degree();
+                                                    document.getElementById('inspector-degree').innerText = `${degree} connection${degree === 1 ? '' : 's'}`;
+
+                                                    // Build connections categorized by relationship
+                                                    const connectedEdges = node.connectedEdges();
+                                                    const relMap = {};
+
+                                                    connectedEdges.forEach(edge => {
+                                                        const rel = edge.data('label');
+                                                        const isSource = edge.data('source') === node.id();
+                                                        const otherNode = isSource ? edge.target() : edge.source();
+                                                        const otherData = otherNode.data();
+
+                                                        if (!relMap[rel]) relMap[rel] = [];
+                                                        relMap[rel].push({
+                                                            id: otherData.id,
+                                                            label: otherData.label,
+                                                            type: otherData.type
+                                                        });
+                                                    });
+
+                                                    const body = document.getElementById('inspector-details-body');
+                                                    body.innerHTML = '';
+
+                                                    if (Object.keys(relMap).length === 0) {
+                                                        body.innerHTML = `<div style="font-size:0.82rem; color:var(--text-tertiary); padding: 0.5rem 0;">No direct connections in graph.</div>`;
+                                                    } else {
+                                                        for (const [rel, targets] of Object.entries(relMap)) {
+                                                            const group = document.createElement('div');
+                                                            group.style.marginBottom = '0.75rem';
+
+                                                            const relHeading = document.createElement('div');
+                                                            relHeading.className = 'inspector-section-label';
+                                                            relHeading.innerText = `${rel} (${targets.length})`;
+                                                            group.appendChild(relHeading);
+
+                                                            const pillContainer = document.createElement('div');
+                                                            pillContainer.className = 'inspector-conn-list';
+
+                                                            targets.forEach(t => {
+                                                                const pill = document.createElement('span');
+                                                                pill.className = 'inspector-pill';
+                                                                pill.innerHTML = `<span style="width:7px; height:7px; border-radius:50%; background:${colors[t.type] || '#94a3b8'};"></span><span>${t.label}</span>`;
+                                                                pill.addEventListener('click', () => {
+                                                                    const targetCyNode = cyInstance.getElementById(t.id);
+                                                                    if (targetCyNode && targetCyNode.length > 0) {
+                                                                        selectAndInspectNode(targetCyNode);
+                                                                        cyInstance.animate({
+                                                                            center: { eles: targetCyNode },
+                                                                            zoom: 1.4,
+                                                                            duration: 400
+                                                                        });
+                                                                    }
+                                                                });
+                                                                pillContainer.appendChild(pill);
+                                                            });
+
+                                                            group.appendChild(pillContainer);
+                                                            body.appendChild(group);
+                                                        }
             ],
-            layout: {
-                name: 'cose',
-                idealEdgeLength: 100,
-                nodeOverlap: 20,
-                refresh: 20,
-                fit: true,
-                padding: 30,
-                randomize: false,
-                componentSpacing: 100,
-                nodeRepulsion: 400000,
-                edgeElasticity: 100,
-                nestingFactor: 5
-            }
-        });
+                                                        layout: {
+                                                            name: 'cose',
+                                                                idealEdgeLength: 100,
+                                                                    nodeOverlap: 20,
+                                                                        refresh: 20,
+                                                                            fit: true,
+                                                                                padding: 30,
+                                                                                    randomize: false,
+                                                                                        componentSpacing: 100,
+                                                                                            nodeRepulsion: 400000,
+                                                                                                edgeElasticity: 100,
+                                                                                                    nestingFactor: 5
+                                                        }
 
-        // Add interaction: hover effects
-        cy.on('mouseover', 'node', function(e){
-            document.body.style.cursor = 'pointer';
-        });
-        cy.on('mouseout', 'node', function(e){
-            document.body.style.cursor = 'default';
-        });
+                                                        inspector.style.display = 'flex';
+                                                    }
 
-        // Add interaction: click to highlight neighborhood
-        cy.on('tap', 'node', function(e){
-            const node = e.target;
-            const neighborhood = node.neighborhood().add(node);
-            
-            cy.elements().style('opacity', 0.1);
-            neighborhood.style('opacity', 1);
-        });
+                                                    function resetHighlights() {
+                                                        if (cyInstance) {
+                                                            cyInstance.elements().removeClass('faded highlighted');
+                                                        }
+                                                    }
 
-        cy.on('tap', function(e){
-            if (e.target === cy) {
-                cy.elements().style('opacity', 1); // Reset on background click
-            }
-        });
+                                                    // ============================================================
+                                                    // TOOLBAR & CONTROLS BINDINGS
+                                                    // ============================================================
+                                                    document.getElementById('inspector-close').addEventListener('click', () => {
+                                                        document.getElementById('graph-inspector').style.display = 'none';
+                                                        resetHighlights();
+                                                        selectedNode = null;
+                                                    });
 
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            cy.elements().style('opacity', 1);
-            cy.fit();
-        });
-    }
-</script>
-{% endblock %}
+                                                    // Add interaction: hover effects
+                                                    cy.on('mouseover', 'node', function (e) {
+                                                        document.body.style.cursor = 'pointer';
+                                                        document.getElementById('btn-reset').addEventListener('click', () => {
+                                                            resetHighlights();
+                                                            document.getElementById('graph-inspector').style.display = 'none';
+                                                            selectedNode = null;
+                                                            document.getElementById('graph-search-input').value = '';
+                                                            cyInstance.fit(null, 35);
+                                                        });
+                                                        cy.on('mouseout', 'node', function (e) {
+                                                            document.body.style.cursor = 'default';
+
+                                                            document.getElementById('btn-zoom-in').addEventListener('click', () => {
+                                                                cyInstance.zoom({
+                                                                    level: cyInstance.zoom() * 1.25,
+                                                                    renderedPosition: { x: cyInstance.width() / 2, y: cyInstance.height() / 2 }
+                                                                });
+                                                            });
+
+                                                            // Add interaction: click to highlight neighborhood
+                                                            cy.on('tap', 'node', function (e) {
+                                                                const node = e.target;
+                                                                const neighborhood = node.neighborhood().add(node);
+
+                                                                cy.elements().style('opacity', 0.1);
+                                                                neighborhood.style('opacity', 1);
+                                                                document.getElementById('btn-zoom-out').addEventListener('click', () => {
+                                                                    cyInstance.zoom({
+                                                                        level: cyInstance.zoom() * 0.8,
+                                                                        renderedPosition: { x: cyInstance.width() / 2, y: cyInstance.height() / 2 }
+                                                                    });
+                                                                });
+
+                                                                cy.on('tap', function (e) {
+                                                                    if (e.target === cy) {
+                                                                        cy.elements().style('opacity', 1); // Reset on background click
+                                                                        document.getElementById('btn-toggle-labels').addEventListener('click', () => {
+                                                                            edgeLabelsVisible = !edgeLabelsVisible;
+                                                                            cyInstance.style()
+                                                                                .selector('edge')
+                                                                                .style('label', edgeLabelsVisible ? 'data(label)' : '')
+                                                                                .update();
+                                                                            const btn = document.getElementById('btn-toggle-labels');
+                                                                            btn.style.color = edgeLabelsVisible ? 'var(--accent-purple)' : 'var(--text-secondary)';
+                                                                        });
+
+                                                                        document.getElementById('layout-select').addEventListener('change', (e) => {
+                                                                            const layoutConfig = getLayoutConfig(e.target.value);
+                                                                            cyInstance.layout(layoutConfig).run();
+                                                                        });
+
+                                                                        // Focus & Isolate actions in Inspector
+                                                                        document.getElementById('btn-focus-node').addEventListener('click', () => {
+                                                                            if (selectedNode) {
+                                                                                cyInstance.animate({
+                                                                                    center: { eles: selectedNode },
+                                                                                    zoom: 1.7,
+                                                                                    duration: 450
+                                                                                });
+                                                                            }
+                                                                        });
+
+                                                                        document.getElementById('btn-reset').addEventListener('click', () => {
+                                                                            cy.elements().style('opacity', 1);
+                                                                            cy.fit();
+                                                                            document.getElementById('btn-isolate-neighborhood').addEventListener('click', () => {
+                                                                                if (selectedNode) {
+                                                                                    const neighborhood = selectedNode.neighborhood().add(selectedNode);
+                                                                                    cyInstance.animate({
+                                                                                        fit: { eles: neighborhood, padding: 60 },
+                                                                                        duration: 500
+                                                                                    });
+                                                                                }
+                                                                            });
+                                                                        }
+
+        // Search Autocomplete / Pan to Node
+        const searchInput = document.getElementById('graph-search-input');
+                                                                        searchInput.addEventListener('input', (e) => {
+                                                                            const query = e.target.value.toLowerCase().trim();
+                                                                            if (!query) {
+                                                                                resetHighlights();
+                                                                                return;
+                                                                            }
+
+                                                                            const matchingNodes = cyInstance.nodes().filter(n => {
+                                                                                return n.data('label').toLowerCase().includes(query) || n.data('type').toLowerCase().includes(query);
+                                                                            });
+
+                                                                            if (matchingNodes.length > 0) {
+                                                                                cyInstance.elements().removeClass('highlighted').addClass('faded');
+                                                                                matchingNodes.removeClass('faded').addClass('highlighted');
+                                                                                if (matchingNodes.length === 1) {
+                                                                                    selectAndInspectNode(matchingNodes[0]);
+                                                                                    cyInstance.animate({
+                                                                                        center: { eles: matchingNodes[0] },
+                                                                                        zoom: 1.5,
+                                                                                        duration: 350
+                                                                                    });
+                                                                                } else {
+                                                                                    cyInstance.animate({
+                                                                                        fit: { eles: matchingNodes, padding: 80 },
+                                                                                        duration: 350
+                                                                                    });
+                                                                                }
+                                                                            } else {
+                                                                                cyInstance.elements().addClass('faded');
+                                                                            }
+                                                                        });
+
+                                                                        // Type Filter Chips click
+                                                                        document.querySelectorAll('.type-filter-chip').forEach(chip => {
+                                                                            chip.addEventListener('click', () => {
+                                                                                const type = chip.dataset.type;
+                                                                                if (activeFilters.has(type)) {
+                                                                                    if (activeFilters.size === 1) return; // keep at least one active
+                                                                                    activeFilters.delete(type);
+                                                                                    chip.classList.remove('active');
+                                                                                } else {
+                                                                                    activeFilters.add(type);
+                                                                                    chip.classList.add('active');
+                                                                                }
+
+                                                                                // Re-populate graph with active filters
+                                                                                const updatedElements = buildElements(rawNodes, rawEdges);
+                                                                                cyInstance.elements().remove();
+                                                                                cyInstance.add(updatedElements);
+                                                                                cyInstance.layout(getLayoutConfig(document.getElementById('layout-select').value)).run();
+                                                                                document.getElementById('graph-inspector').style.display = 'none';
+                                                                                selectedNode = null;
+                                                                            });
+                                                                        });
+
+                                                                        // Export high-resolution PNG
+                                                                        document.getElementById('btn-export-png').addEventListener('click', () => {
+                                                                            const pngData = cyInstance.png({
+                                                                                bg: '#ffffff',
+                                                                                full: true,
+                                                                                scale: 2.5
+                                                                            });
+                                                                            const downloadLink = document.createElement('a');
+                                                                            downloadLink.href = pngData;
+                                                                            downloadLink.download = 'skillmesh-knowledge-graph.png';
+                                                                            document.body.appendChild(downloadLink);
+                                                                            downloadLink.click();
+                                                                            document.body.removeChild(downloadLink);
+                                                                        });
+
+                                                                        function updateFilterCounts(nodes) {
+                                                                            const counts = { 'Employee': 0, 'Skill': 0, 'Department': 0, 'Project': 0, 'Certification': 0 };
+                                                                            nodes.forEach(n => {
+                                                                                if (counts[n.type] !== undefined) counts[n.type]++;
+                                                                            });
+                                                                            for (const [type, count] of Object.entries(counts)) {
+                                                                                const el = document.getElementById(`chip-count-${type}`);
+                                                                                if (el) el.innerText = `(${count})`;
+                                                                            }
+                                                                        }
+
+                                                                        // ============================================================
+                                                                        // GRAPH METRICS & STATISTICS (BELOW GRAPH)
+                                                                        // ============================================================
+                                                                        function renderGraphStatistics(nodes, edges) {
+                                                                            const totalNodes = nodes.length;
+                                                                            const totalEdges = edges.length;
+
+                                                                            document.getElementById('kpi-total-nodes').innerText = totalNodes;
+                                                                            document.getElementById('kpi-total-edges').innerText = totalEdges;
+
+                                                                            // Density: 2 * |E| / (|V| * (|V| - 1))
+                                                                            const maxEdges = (totalNodes * (totalNodes - 1)) / 2;
+                                                                            const density = maxEdges > 0 ? ((totalEdges / maxEdges) * 100).toFixed(1) : 0;
+                                                                            document.getElementById('kpi-density').innerText = `${density}%`;
+
+                                                                            // Node degree calculations
+                                                                            const degreeMap = {};
+                                                                            const nodeLookup = {};
+                                                                            nodes.forEach(n => {
+                                                                                degreeMap[n.id] = 0;
+                                                                                nodeLookup[n.id] = n;
+                                                                            });
+
+                                                                            edges.forEach(e => {
+                                                                                if (degreeMap[e.source] !== undefined) degreeMap[e.source]++;
+                                                                                if (degreeMap[e.target] !== undefined) degreeMap[e.target]++;
+                                                                            });
+
+                                                                            // Find top central hub
+                                                                            let maxDegree = -1;
+                                                                            let topHubId = null;
+                                                                            for (const [id, deg] of Object.entries(degreeMap)) {
+                                                                                if (deg > maxDegree) {
+                                                                                    maxDegree = deg;
+                                                                                    topHubId = id;
+                                                                                }
+                                                                            }
+
+                                                                            if (topHubId && nodeLookup[topHubId]) {
+                                                                                document.getElementById('kpi-hub-name').innerText = nodeLookup[topHubId].label;
+                                                                                document.getElementById('kpi-hub-degree').innerText = `${maxDegree} total connections (${nodeLookup[topHubId].type})`;
+                                                                            }
+
+                                                                            // 1. Top 5 Connected Hubs
+                                                                            const sortedNodes = Object.entries(degreeMap)
+                                                                                .map(([id, deg]) => ({ node: nodeLookup[id], degree: deg }))
+                                                                                .filter(item => item.node)
+                                                                                .sort((a, b) => b.degree - a.degree);
+
+                                                                            const hubsContainer = document.getElementById('hubs-ranked-list');
+                                                                            hubsContainer.innerHTML = '';
+                                                                            const top5 = sortedNodes.slice(0, 5);
+                                                                            const highestDegree = top5[0]?.degree || 1;
+
+                                                                            top5.forEach((item, idx) => {
+                                                                                const n = item.node;
+                                                                                const pct = Math.round((item.degree / highestDegree) * 100);
+                                                                                const color = colors[n.type] || '#818cf8';
+
+                                                                                hubsContainer.innerHTML += `
+                    <div class="rank-row">
+                        <div class="rank-badge top-${idx + 1}">${idx + 1}</div>
+                        <div class="rank-bar-wrap">
+                            <div class="rank-bar-meta">
+                                <span>${n.label} <span style="font-weight:400; color:var(--text-tertiary); font-size:0.75rem;">(${n.type})</span></span>
+                                <span style="color:var(--text-primary); font-weight:700;">${item.degree} links</span>
+                            </div>
+                            <div class="rank-bar-track">
+                                <div class="rank-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                                                                            });
+
+                                                                            // 2. Entity Type Distribution
+                                                                            document.getElementById('entity-breakdown-total').innerText = `${totalNodes} Total Entities`;
+                                                                            const typeCounts = {};
+                                                                            nodes.forEach(n => {
+                                                                                typeCounts[n.type] = (typeCounts[n.type] || 0) + 1;
+                                                                            });
+
+                                                                            const entityDistContainer = document.getElementById('entity-distribution-list');
+                                                                            entityDistContainer.innerHTML = '';
+                                                                            for (const [type, count] of Object.entries(typeCounts)) {
+                                                                                const pct = Math.round((count / totalNodes) * 100);
+                                                                                const color = colors[type] || '#818cf8';
+
+                                                                                entityDistContainer.innerHTML += `
+                    <div class="rank-row">
+                        <span class="chip-dot" style="width:10px; height:10px; border-radius:50%; background:${color}; flex-shrink:0;"></span>
+                        <div class="rank-bar-wrap">
+                            <div class="rank-bar-meta">
+                                <span>${type}</span>
+                                <span>${count} (${pct}%)</span>
+                            </div>
+                            <div class="rank-bar-track">
+                                <div class="rank-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                                                                            }
+
+                                                                            // 3. Relationship Type Breakdown
+                                                                            document.getElementById('rel-breakdown-total').innerText = `${totalEdges} Triples`;
+                                                                            const relCounts = {};
+                                                                            edges.forEach(e => {
+                                                                                relCounts[e.relationship] = (relCounts[e.relationship] || 0) + 1;
+                                                                            });
+
+                                                                            const relContainer = document.getElementById('rel-distribution-list');
+                                                                            relContainer.innerHTML = '';
+                                                                            for (const [rel, count] of Object.entries(relCounts).sort((a, b) => b[1] - a[1])) {
+                                                                                const pct = Math.round((count / totalEdges) * 100);
+                                                                                relContainer.innerHTML += `
+                    <div class="rank-row">
+                        <div class="rank-bar-wrap">
+                            <div class="rank-bar-meta">
+                                <code>:${rel}</code>
+                                <span style="font-weight:700;">${count}</span>
+                            </div>
+                            <div class="rank-bar-track">
+                                <div class="rank-bar-fill" style="width: ${pct}%; background: var(--accent-purple);"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                                                                            }
+
+                                                                            // 4. Key Semantic Insights
+                                                                            const insightsContainer = document.getElementById('semantic-insights-list');
+
+                                                                            // Insight A: Most versatile employee
+                                                                            const empSkillCounts = {};
+                                                                            edges.forEach(e => {
+                                                                                if (e.relationship === 'hasSkill') {
+                                                                                    empSkillCounts[e.source] = (empSkillCounts[e.source] || 0) + 1;
+                                                                                }
+                                                                            });
+                                                                            let topEmpId = null, maxSkills = 0;
+                                                                            for (const [id, count] of Object.entries(empSkillCounts)) {
+                                                                                if (count > maxSkills) { maxSkills = count; topEmpId = id; }
+                                                                            }
+                                                                            const topEmpName = topEmpId && nodeLookup[topEmpId] ? nodeLookup[topEmpId].label : 'N/A';
+
+                                                                            // Insight B: Most in-demand skill (requiresSkill)
+                                                                            const skillDemand = {};
+                                                                            edges.forEach(e => {
+                                                                                if (e.relationship === 'requiresSkill') {
+                                                                                    skillDemand[e.target] = (skillDemand[e.target] || 0) + 1;
+                                                                                }
+                                                                            });
+                                                                            let topSkillId = null, maxProjects = 0;
+                                                                            for (const [id, count] of Object.entries(skillDemand)) {
+                                                                                if (count > maxProjects) { maxProjects = count; topSkillId = id; }
+                                                                            }
+                                                                            const topSkillName = topSkillId && nodeLookup[topSkillId] ? nodeLookup[topSkillId].label : 'Python';
+
+                                                                            // Insight C: Most certified skill (certifiesSkill)
+                                                                            const skillCerts = {};
+                                                                            edges.forEach(e => {
+                                                                                if (e.relationship === 'certifiesSkill') {
+                                                                                    skillCerts[e.target] = (skillCerts[e.target] || 0) + 1;
+                                                                                }
+                                                                            });
+                                                                            let topCertSkillId = null, maxC = 0;
+                                                                            for (const [id, count] of Object.entries(skillCerts)) {
+                                                                                if (count > maxC) { maxC = count; topCertSkillId = id; }
+                                                                            }
+                                                                            const topCertSkillName = topCertSkillId && nodeLookup[topCertSkillId] ? nodeLookup[topCertSkillId].label : 'N/A';
+
+                                                                            insightsContainer.innerHTML = `
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--accent-purple); font-size: 1.4rem;">military_tech</span>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.88rem;">Most Multi-Skilled Employee</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>${topEmpName}</strong> holds <strong>${maxSkills} technical skills</strong> in the knowledge base.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--pastel-green-text); font-size: 1.4rem;">star</span>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.88rem;">Most Demanded Project Skill</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>${topSkillName}</strong> is required across <strong>${maxProjects} organizational projects</strong>.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.65rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                    <span class="material-symbols-rounded" style="color: var(--pastel-violet-text); font-size: 1.4rem;">workspace_premium</span>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.88rem;">Top Certified Domain</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>${topCertSkillName}</strong> has the highest concentration of industry certifications.
+                        </div>
+                    </div>
+                </div>
+            `;
+                                                                        }
+                                                                    });
+                                </script>
+                                {% endblock %}

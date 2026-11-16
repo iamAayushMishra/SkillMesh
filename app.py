@@ -680,9 +680,12 @@ def api_graph():
     WHERE {
         {
             ?s rdf:type :Employee .
-            ?s :name ?sourceLabel .
+            OPTIONAL { ?s :name ?sName . }
+            OPTIONAL { ?s :employeeId ?sId . }
+            BIND(COALESCE(?sName, ?sId, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :hasSkill ?t .
-            ?t :skillName ?targetLabel .
+            OPTIONAL { ?t :skillName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Employee" AS ?sourceType)
             BIND("Skill" AS ?targetType)
             BIND("hasSkill" AS ?relationship)
@@ -691,9 +694,12 @@ def api_graph():
         }
         UNION {
             ?s rdf:type :Employee .
-            ?s :name ?sourceLabel .
+            OPTIONAL { ?s :name ?sName . }
+            OPTIONAL { ?s :employeeId ?sId . }
+            BIND(COALESCE(?sName, ?sId, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :worksIn ?t .
-            ?t :deptName ?targetLabel .
+            OPTIONAL { ?t :deptName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Employee" AS ?sourceType)
             BIND("Department" AS ?targetType)
             BIND("worksIn" AS ?relationship)
@@ -702,9 +708,12 @@ def api_graph():
         }
         UNION {
             ?s rdf:type :Employee .
-            ?s :name ?sourceLabel .
+            OPTIONAL { ?s :name ?sName . }
+            OPTIONAL { ?s :employeeId ?sId . }
+            BIND(COALESCE(?sName, ?sId, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :worksOn ?t .
-            ?t :projectName ?targetLabel .
+            OPTIONAL { ?t :projectName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Employee" AS ?sourceType)
             BIND("Project" AS ?targetType)
             BIND("worksOn" AS ?relationship)
@@ -712,10 +721,26 @@ def api_graph():
             BIND(STR(?t) AS ?target)
         }
         UNION {
+            ?s rdf:type :Employee .
+            OPTIONAL { ?s :name ?sName . }
+            OPTIONAL { ?s :employeeId ?sId . }
+            BIND(COALESCE(?sName, ?sId, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
+            ?s :hasCertification ?t .
+            OPTIONAL { ?t :certName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
+            BIND("Employee" AS ?sourceType)
+            BIND("Certification" AS ?targetType)
+            BIND("hasCertification" AS ?relationship)
+            BIND(STR(?s) AS ?source)
+            BIND(STR(?t) AS ?target)
+        }
+        UNION {
             ?s rdf:type :Skill .
-            ?s :skillName ?sourceLabel .
+            OPTIONAL { ?s :skillName ?sName . }
+            BIND(COALESCE(?sName, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :relatedTo ?t .
-            ?t :skillName ?targetLabel .
+            OPTIONAL { ?t :skillName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Skill" AS ?sourceType)
             BIND("Skill" AS ?targetType)
             BIND("relatedTo" AS ?relationship)
@@ -724,9 +749,11 @@ def api_graph():
         }
         UNION {
             ?s rdf:type :Department .
-            ?s :deptName ?sourceLabel .
+            OPTIONAL { ?s :deptName ?sName . }
+            BIND(COALESCE(?sName, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :handlesProject ?t .
-            ?t :projectName ?targetLabel .
+            OPTIONAL { ?t :projectName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Department" AS ?sourceType)
             BIND("Project" AS ?targetType)
             BIND("handlesProject" AS ?relationship)
@@ -735,12 +762,27 @@ def api_graph():
         }
         UNION {
             ?s rdf:type :Project .
-            ?s :projectName ?sourceLabel .
+            OPTIONAL { ?s :projectName ?sName . }
+            BIND(COALESCE(?sName, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
             ?s :requiresSkill ?t .
-            ?t :skillName ?targetLabel .
+            OPTIONAL { ?t :skillName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
             BIND("Project" AS ?sourceType)
             BIND("Skill" AS ?targetType)
             BIND("requiresSkill" AS ?relationship)
+            BIND(STR(?s) AS ?source)
+            BIND(STR(?t) AS ?target)
+        }
+        UNION {
+            ?s rdf:type :Certification .
+            OPTIONAL { ?s :certName ?sName . }
+            BIND(COALESCE(?sName, REPLACE(STR(?s), "^.*[#/]", "")) AS ?sourceLabel)
+            ?s :certifiesSkill ?t .
+            OPTIONAL { ?t :skillName ?tName . }
+            BIND(COALESCE(?tName, REPLACE(STR(?t), "^.*[#/]", "")) AS ?targetLabel)
+            BIND("Certification" AS ?sourceType)
+            BIND("Skill" AS ?targetType)
+            BIND("certifiesSkill" AS ?relationship)
             BIND(STR(?s) AS ?source)
             BIND(STR(?t) AS ?target)
         }
@@ -750,7 +792,6 @@ def api_graph():
     if error:
         return jsonify({"error": error}), 503
 
-    # Build unique nodes and edges for Cytoscape.js
     nodes = {}
     edges = []
 
@@ -768,6 +809,24 @@ def api_graph():
             "target": tgt_id,
             "relationship": r["relationship"],
         })
+
+    # Also capture isolated nodes that have no edges (if any)
+    from sparql_client import kg, EX
+    from rdflib.namespace import RDF
+    for s in kg.subjects(RDF.type, EX.Employee):
+        sid = str(s)
+        if sid not in nodes:
+            name = list(kg.objects(s, EX.name))
+            emp_id = list(kg.objects(s, EX.employeeId))
+            lbl = str(name[0]) if name else (str(emp_id[0]) if emp_id else sid.split("#")[-1])
+            nodes[sid] = {"id": sid, "label": lbl, "type": "Employee"}
+
+    for s in kg.subjects(RDF.type, EX.Project):
+        sid = str(s)
+        if sid not in nodes:
+            pname = list(kg.objects(s, EX.projectName))
+            lbl = str(pname[0]) if pname else sid.split("#")[-1]
+            nodes[sid] = {"id": sid, "label": lbl, "type": "Project"}
 
     return jsonify({
         "nodes": list(nodes.values()),

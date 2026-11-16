@@ -250,3 +250,12 @@
     :hasSkill :ArtificialIntelligence , :MachineLearning , :Python , :SQL ;
     :hasCertification :DataScienceCertification ;
     :worksOn :EmployeeAnalytics .
+
+:EMP017 rdf:type :Employee ;
+    :employeeId "EMP017" ;
+    :name "Aayush Mishra" ;
+    :email "aayush@company.com" ;
+    :worksIn :AIDepartment ;
+    :hasSkill :ArtificialIntelligence , :Java , :MachineLearning , :Python , :RDFSkill , :SPARQLSkill , :SQL ;
+    :hasCertification :AWSCertification , :DataScienceCertification , :JavaCertification , :MLCertification , :PythonCertification ;
+    :worksOn :AIChatbot , :SemanticSearchSystem .

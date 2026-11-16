@@ -57,3 +57,20 @@ def test_page_routes(client):
         res = client.get(page)
         assert res.status_code == 200
         assert b"<!DOCTYPE html>" in res.data
+
+def test_graph_api(client):
+    """Test that graph endpoint returns nodes, edges, and proper entity types."""
+    res = client.get('/api/graph')
+    assert res.status_code == 200
+    data = res.get_json()
+    assert "nodes" in data
+    assert "edges" in data
+    assert len(data["nodes"]) >= 30
+    assert len(data["edges"]) >= 80
+
+    node_types = set(n["type"] for n in data["nodes"])
+    assert "Employee" in node_types
+    assert "Skill" in node_types
+    assert "Department" in node_types
+    assert "Project" in node_types
+    assert "Certification" in node_types
